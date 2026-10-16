@@ -1,0 +1,545 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b1220">
+<title>Repertorio</title>
+<style>
+:root{--bg:#0b1220;--card:#131c2f;--card2:#1a2540;--txt:#e8eefc;--mut:#8fa0c4;--acc:#5cc8ff;--acc2:#8b7bff;--ok:#43d6a0;--warn:#ffb454;--bad:#ff6b7a;--bd:#243253}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;font-size:16px}
+body{padding:14px 14px 96px;max-width:640px;margin:0 auto}
+h1{font-size:20px;margin:4px 0 12px}
+h2{font-size:16px;margin:18px 0 8px;color:var(--mut);font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:12px;margin-bottom:12px}
+input[type=text],input[type=date],input[type=search]{width:100%;background:var(--card2);border:1px solid var(--bd);border-radius:10px;color:var(--txt);padding:11px 12px;font-size:16px;margin-bottom:8px}
+label.chk{display:flex;align-items:center;gap:10px;padding:6px 2px;font-size:15px}
+input[type=checkbox]{width:22px;height:22px;accent-color:var(--acc)}
+button{font:inherit;color:var(--txt);background:var(--card2);border:1px solid var(--bd);border-radius:10px;padding:10px 14px;cursor:pointer}
+button:active{transform:scale(.97)}
+button.pri{background:linear-gradient(135deg,var(--acc),var(--acc2));color:#04101f;border:0;font-weight:700}
+button.dng{color:var(--bad)}
+button:disabled{opacity:.4}
+button.ico{padding:8px 11px;min-width:40px}
+.row{display:flex;align-items:center;gap:8px;padding:10px 4px;border-bottom:1px solid var(--bd)}
+.row:last-child{border-bottom:0}
+.grow{flex:1;min-width:0}
+.t{font-weight:600;overflow-wrap:anywhere}
+.sub{color:var(--mut);font-size:14px}
+.badge{font-size:11px;background:var(--ok);color:#04251a;border-radius:20px;padding:2px 8px;margin-left:6px;font-weight:700;vertical-align:middle}
+.chips{display:flex;gap:8px;margin-bottom:8px}
+.chip{flex:1;text-align:center;padding:8px;border-radius:20px;font-size:14px}
+.chip.on{background:var(--acc);color:#04101f;border-color:var(--acc);font-weight:700}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.btns>button{flex:1}
+.empty{color:var(--mut);text-align:center;padding:16px 0;margin:0}
+nav{position:fixed;left:0;right:0;bottom:0;background:#0e1626;border-top:1px solid var(--bd);display:flex;padding:6px 6px calc(6px + env(safe-area-inset-bottom));z-index:10}
+nav button{flex:1;background:none;border:0;color:var(--mut);padding:8px 4px;font-size:13px;border-radius:10px}
+nav button b{display:block;font-size:20px;font-weight:400}
+nav button.on{color:var(--acc);background:var(--card2)}
+.tab{display:none}.tab.on{display:block}
+.num{width:24px;color:var(--mut);text-align:right;font-variant-numeric:tabular-nums}
+.link{display:block;width:calc(100% - 32px);margin:2px 0 2px 32px;padding:6px 10px;font-size:13px;border-radius:8px;text-align:left;background:transparent;border:1px dashed var(--bd);color:var(--mut)}
+.link.segue{border-style:solid;border-color:var(--acc2);color:var(--acc2);background:rgba(139,123,255,.1)}
+.link.cambio{border-color:var(--warn);color:var(--warn)}
+.total{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.big{font-size:26px;font-weight:800;font-variant-numeric:tabular-nums}
+.wheelwrap{position:relative;width:100%;max-width:420px;margin:0 auto}
+canvas{width:100%;aspect-ratio:1;display:block}
+.result{text-align:center;font-size:22px;font-weight:800;padding:14px;border-radius:14px;background:linear-gradient(135deg,rgba(92,200,255,.18),rgba(139,123,255,.18));border:1px solid var(--acc);margin:10px 0;overflow-wrap:anywhere;display:none}
+.result small{display:block;color:var(--mut);font-weight:400;font-size:14px;margin-top:2px}
+.sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:20;display:none;align-items:flex-end}
+.sheet-bg.on{display:flex}
+.sheet{background:var(--bg);width:100%;max-width:640px;margin:0 auto;border-radius:18px 18px 0 0;padding:14px 14px calc(14px + env(safe-area-inset-bottom));max-height:80vh;display:flex;flex-direction:column;border:1px solid var(--bd)}
+.sheet .scroll{overflow:auto;flex:1}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#fff;color:#000;padding:10px 16px;border-radius:20px;font-size:14px;z-index:30;display:none;max-width:90%}
+.hdr{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.hdr h1{margin:0;flex:1}
+</style>
+</head>
+<body>
+
+<!-- REPERTORIO -->
+<section class="tab on" id="tab-songs">
+  <h1>🎸 Repertorio</h1>
+  <div class="card">
+    <input type="text" id="s-title" placeholder="Titolo del brano" autocomplete="off">
+    <input type="text" id="s-dur" placeholder="Durata (es. 3:45)" inputmode="numeric" autocomplete="off">
+    <label class="chk"><input type="checkbox" id="s-own"> Pezzo nostro (inedito)</label>
+    <div class="btns">
+      <button class="pri" id="s-save" data-act="save-song">Aggiungi</button>
+      <button id="s-cancel" data-act="cancel-song" style="display:none">Annulla</button>
+    </div>
+  </div>
+
+  <input type="search" id="s-search" placeholder="Cerca…">
+  <div class="chips">
+    <button class="chip on" data-act="filter" data-f="all">Tutti</button>
+    <button class="chip" data-act="filter" data-f="own">Nostri</button>
+    <button class="chip" data-act="filter" data-f="cover">Cover</button>
+  </div>
+  <div class="sub" id="song-stats" style="margin:0 0 6px 4px"></div>
+  <div class="card" id="song-list"></div>
+
+  <h2>Backup</h2>
+  <div class="card">
+    <p class="sub" style="margin-top:0">I dati restano nel browser del telefono. Esporta ogni tanto un backup.</p>
+    <div class="btns">
+      <button data-act="export">⬇ Esporta</button>
+      <button data-act="import">⬆ Importa</button>
+    </div>
+    <input type="file" id="file-in" accept=".json,application/json" style="display:none">
+  </div>
+</section>
+
+<!-- SCALETTE -->
+<section class="tab" id="tab-sets">
+  <div id="sl-list-view">
+    <div class="hdr"><h1>📋 Scalette</h1><button class="pri" data-act="new-set">+ Nuova</button></div>
+    <div id="sl-list"></div>
+  </div>
+  <div id="sl-edit-view" style="display:none">
+    <div class="hdr">
+      <button data-act="back-sets">← Indietro</button>
+      <h1></h1>
+      <button class="dng" data-act="del-set">🗑</button>
+    </div>
+    <div class="card">
+      <input type="text" id="sl-name" placeholder="Nome (es. Locale X)">
+      <input type="date" id="sl-date">
+    </div>
+    <div class="card total">
+      <div><div class="sub">Durata scaletta</div><div class="big" id="sl-total">0:00</div></div>
+      <div class="sub" id="sl-info" style="text-align:right"></div>
+    </div>
+    <div class="card" id="sl-items"></div>
+    <div class="btns">
+      <button class="pri" data-act="open-picker">+ Aggiungi brani</button>
+      <button data-act="copy-set">📋 Copia testo</button>
+    </div>
+  </div>
+</section>
+
+<!-- RUOTA -->
+<section class="tab" id="tab-wheel">
+  <h1>🎡 Ruota</h1>
+  <div class="wheelwrap"><canvas id="wheel"></canvas></div>
+  <div class="result" id="result"></div>
+  <div class="btns" style="margin-top:10px">
+    <button class="pri" id="spin-btn" data-act="spin" style="font-size:18px;padding:14px">GIRA!</button>
+  </div>
+  <div class="sub" id="wheel-info" style="text-align:center;margin:8px 0"></div>
+
+  <h2>Estratti</h2>
+  <div class="card" id="extracted"></div>
+  <div class="btns">
+    <button class="dng" data-act="reset-wheel">↺ Reset estratti</button>
+    <button data-act="include-all">Includi tutti</button>
+  </div>
+
+  <h2>Brani in ruota</h2>
+  <p class="sub" style="margin-top:0">Togli la spunta per escludere un brano.</p>
+  <div class="card" id="wheel-songs"></div>
+</section>
+
+<!-- PICKER -->
+<div class="sheet-bg" id="picker" data-act="close-picker">
+  <div class="sheet" onclick="event.stopPropagation()">
+    <div class="hdr"><h1>Aggiungi brani</h1><button class="pri" data-act="close-picker">Fatto</button></div>
+    <input type="search" id="p-search" placeholder="Cerca…">
+    <div class="scroll" id="p-list"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<nav>
+  <button class="on" data-tab="songs"><b>🎸</b>Repertorio</button>
+  <button data-tab="sets"><b>📋</b>Scalette</button>
+  <button data-tab="wheel"><b>🎡</b>Ruota</button>
+</nav>
+
+<script>
+const KEY = 'repertorio_gruppo_v1';
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+
+function defaults() { return { songs: [], setlists: [], wheel: { excluded: [], extracted: [] } }; }
+function load() {
+  try {
+    const r = JSON.parse(localStorage.getItem(KEY));
+    if (r && Array.isArray(r.songs)) {
+      const d = Object.assign(defaults(), r);
+      d.wheel = Object.assign({ excluded: [], extracted: [] }, d.wheel);
+      return d;
+    }
+  } catch (e) {}
+  return defaults();
+}
+let S = load();
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { toast('Impossibile salvare i dati'); } }
+
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.style.display = 'block';
+  clearTimeout(toast._t); toast._t = setTimeout(() => t.style.display = 'none', 2200);
+}
+function fmt(sec) {
+  sec = Math.round(sec || 0);
+  const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+  const p = n => String(n).padStart(2, '0');
+  return h > 0 ? `${h}:${p(m)}:${p(s)}` : `${m}:${p(s)}`;
+}
+function parseDur(str) {
+  str = str.trim().replace(',', '.');
+  if (!str) return 0;
+  if (/^\d+([:.]\d{1,2})?$/.test(str)) {
+    if (/[:.]/.test(str)) { const [m, s] = str.split(/[:.]/); return (+m) * 60 + (+s); }
+    return (+str) * 60;
+  }
+  return NaN;
+}
+const songById = id => S.songs.find(s => s.id === id);
+const sortSongs = arr => arr.slice().sort((a, b) => a.title.localeCompare(b.title, 'it'));
+
+/* ---------- Tabs ---------- */
+function showTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.id === 'tab-' + name));
+  document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b.dataset.tab === name));
+  if (name === 'songs') renderSongs();
+  if (name === 'sets') renderSetlists();
+  if (name === 'wheel') renderWheel();
+  window.scrollTo(0, 0);
+}
+
+/* ---------- Repertorio ---------- */
+let filter = 'all', q = '', editingSong = null;
+function renderSongs() {
+  const list = sortSongs(S.songs.filter(s =>
+    (filter === 'all' || (filter === 'own' ? s.own : !s.own)) && s.title.toLowerCase().includes(q)));
+  const tot = S.songs.reduce((a, s) => a + s.dur, 0);
+  $('#song-stats').textContent = `${S.songs.length} brani (${S.songs.filter(s => s.own).length} nostri) · ${fmt(tot)}`;
+  $('#song-list').innerHTML = list.length ? list.map(s => `
+    <div class="row">
+      <div class="grow"><div class="t">${esc(s.title)}${s.own ? '<span class="badge">nostro</span>' : ''}</div>
+      <div class="sub">${fmt(s.dur)}</div></div>
+      <button class="ico" data-act="edit-song" data-id="${s.id}">✎</button>
+      <button class="ico dng" data-act="del-song" data-id="${s.id}">🗑</button>
+    </div>`).join('') : '<p class="empty">Nessun brano</p>';
+}
+function saveSong() {
+  const title = $('#s-title').value.trim();
+  const dur = parseDur($('#s-dur').value);
+  if (!title) return toast('Inserisci il titolo');
+  if (isNaN(dur)) return toast('Durata non valida (usa es. 3:45)');
+  const own = $('#s-own').checked;
+  if (editingSong) {
+    const s = songById(editingSong);
+    if (s) { s.title = title; s.dur = dur; s.own = own; }
+  } else {
+    S.songs.push({ id: uid(), title, dur, own });
+  }
+  save(); resetSongForm(); renderSongs();
+}
+function resetSongForm() {
+  editingSong = null;
+  $('#s-title').value = ''; $('#s-dur').value = ''; $('#s-own').checked = false;
+  $('#s-save').textContent = 'Aggiungi'; $('#s-cancel').style.display = 'none';
+}
+function editSong(id) {
+  const s = songById(id); if (!s) return;
+  editingSong = id;
+  $('#s-title').value = s.title; $('#s-dur').value = fmt(s.dur); $('#s-own').checked = s.own;
+  $('#s-save').textContent = 'Salva modifiche'; $('#s-cancel').style.display = '';
+  window.scrollTo(0, 0); $('#s-title').focus();
+}
+function delSong(id) {
+  const s = songById(id); if (!s) return;
+  const used = S.setlists.filter(l => l.items.includes(id)).length;
+  const msg = `Eliminare "${s.title}"?` + (used ? `\nVerrà tolto anche da ${used} scalett${used === 1 ? 'a' : 'e'}.` : '');
+  if (!confirm(msg)) return;
+  S.songs = S.songs.filter(x => x.id !== id);
+  S.setlists.forEach(l => {
+    for (let i = l.items.length - 1; i >= 0; i--) if (l.items[i] === id) removeItem(l, i);
+  });
+  S.wheel.excluded = S.wheel.excluded.filter(x => x !== id);
+  S.wheel.extracted = S.wheel.extracted.filter(x => x !== id);
+  if (editingSong === id) resetSongForm();
+  save(); renderSongs();
+}
+
+/* ---------- Scalette ---------- */
+let editingSl = null;
+const todayStr = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+const fmtDate = d => d ? new Date(d + 'T12:00:00').toLocaleDateString('it-IT', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' }) : 'senza data';
+const slDur = l => l.items.reduce((a, id) => a + (songById(id)?.dur || 0), 0);
+function removeItem(l, i) {
+  l.items.splice(i, 1);
+  if (l.links.length) l.links.splice(Math.min(i, l.links.length - 1), 1);
+}
+function renderSetlists() {
+  const edit = !!editingSl;
+  $('#sl-list-view').style.display = edit ? 'none' : '';
+  $('#sl-edit-view').style.display = edit ? '' : 'none';
+  if (edit) return renderEditor();
+  const sorted = S.setlists.slice().sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  $('#sl-list').innerHTML = sorted.length ? sorted.map(l => `
+    <div class="card row" style="border-bottom:1px solid var(--bd)">
+      <div class="grow" data-act="open-set" data-id="${l.id}" style="cursor:pointer">
+        <div class="t">${esc(l.name || 'Scaletta')}</div>
+        <div class="sub">${fmtDate(l.date)} · ${l.items.length} brani · ${fmt(slDur(l))}</div>
+      </div>
+      <button class="ico" data-act="dup-set" data-id="${l.id}" title="Duplica">⧉</button>
+    </div>`).join('') : '<p class="empty">Nessuna scaletta. Creane una!</p>';
+}
+function renderEditor() {
+  const l = S.setlists.find(x => x.id === editingSl);
+  if (!l) { editingSl = null; return renderSetlists(); }
+  $('#sl-edit-view h1').textContent = l.name || 'Scaletta';
+  if (document.activeElement !== $('#sl-name')) $('#sl-name').value = l.name || '';
+  $('#sl-date').value = l.date || '';
+  $('#sl-total').textContent = fmt(slDur(l));
+  const seg = l.links.filter(x => x === 'segue').length;
+  $('#sl-info').innerHTML = `${l.items.length} brani<br>${l.links.length - seg} cambi · ${seg} concatenati`;
+  $('#sl-items').innerHTML = l.items.length ? l.items.map((id, i) => {
+    const s = songById(id);
+    const row = `<div class="row">
+      <div class="num">${i + 1}</div>
+      <div class="grow"><div class="t">${esc(s?.title || '?')}${s?.own ? '<span class="badge">nostro</span>' : ''}</div><div class="sub">${fmt(s?.dur)}</div></div>
+      <button class="ico" data-act="up" data-i="${i}" ${i === 0 ? 'disabled' : ''}>▲</button>
+      <button class="ico" data-act="down" data-i="${i}" ${i === l.items.length - 1 ? 'disabled' : ''}>▼</button>
+      <button class="ico dng" data-act="rm" data-i="${i}">✕</button>
+    </div>`;
+    if (i < l.items.length - 1) {
+      const t = l.links[i] || 'cambio';
+      return row + `<button class="link ${t}" data-act="toggle-link" data-i="${i}">${t === 'segue' ? '⤵ Concatenati (attacco diretto)' : '⏸ Cambio (tocca per concatenare)'}</button>`;
+    }
+    return row;
+  }).join('') : '<p class="empty">Scaletta vuota</p>';
+}
+function curSl() { return S.setlists.find(x => x.id === editingSl); }
+function newSet() {
+  const l = { id: uid(), name: '', date: todayStr(), items: [], links: [] };
+  S.setlists.push(l); save(); editingSl = l.id; renderSetlists();
+}
+function dupSet(id) {
+  const l = S.setlists.find(x => x.id === id); if (!l) return;
+  S.setlists.push({ id: uid(), name: (l.name || 'Scaletta') + ' (copia)', date: todayStr(), items: l.items.slice(), links: l.links.slice() });
+  save(); renderSetlists(); toast('Scaletta duplicata');
+}
+function delSet() {
+  const l = curSl(); if (!l) return;
+  if (!confirm(`Eliminare la scaletta "${l.name || 'Scaletta'}"?`)) return;
+  S.setlists = S.setlists.filter(x => x.id !== l.id); editingSl = null; save(); renderSetlists();
+}
+function move(i, d) {
+  const l = curSl(), j = i + d;
+  if (!l || j < 0 || j >= l.items.length) return;
+  [l.items[i], l.items[j]] = [l.items[j], l.items[i]];
+  save(); renderEditor();
+}
+function setText(l) {
+  const lines = [`${l.name || 'Scaletta'} - ${fmtDate(l.date)}`, `Durata: ${fmt(slDur(l))}`, ''];
+  l.items.forEach((id, i) => {
+    const s = songById(id);
+    lines.push(`${i + 1}. ${s?.title || '?'} (${fmt(s?.dur)})${s?.own ? ' [nostro]' : ''}`);
+    if (i < l.items.length - 1) lines.push((l.links[i] || 'cambio') === 'segue' ? '   ↓ attacco diretto' : '   — cambio');
+  });
+  return lines.join('\n');
+}
+async function copySet() {
+  const l = curSl(); if (!l) return;
+  const text = setText(l);
+  try { await navigator.clipboard.writeText(text); toast('Copiata negli appunti'); }
+  catch (e) {
+    const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta);
+    ta.select(); try { document.execCommand('copy'); toast('Copiata negli appunti'); } catch (_) { toast('Copia non riuscita'); }
+    ta.remove();
+  }
+}
+/* picker */
+function openPicker() { $('#picker').classList.add('on'); $('#p-search').value = ''; renderPicker(); }
+function renderPicker() {
+  const l = curSl(); if (!l) return;
+  const qq = $('#p-search').value.trim().toLowerCase();
+  const list = sortSongs(S.songs.filter(s => s.title.toLowerCase().includes(qq)));
+  $('#p-list').innerHTML = list.length ? list.map(s => {
+    const n = l.items.filter(x => x === s.id).length;
+    return `<div class="row" data-act="add-song" data-id="${s.id}" style="cursor:pointer">
+      <div class="grow"><div class="t">${esc(s.title)}${s.own ? '<span class="badge">nostro</span>' : ''}</div><div class="sub">${fmt(s.dur)}</div></div>
+      ${n ? `<span class="sub">×${n}</span>` : ''}<button class="ico">+</button></div>`;
+  }).join('') : '<p class="empty">Nessun brano nel repertorio</p>';
+}
+function addToSet(id) {
+  const l = curSl(); if (!l) return;
+  if (l.items.length) l.links.push('cambio');
+  l.items.push(id); save(); renderPicker(); renderEditor();
+}
+
+/* ---------- Ruota ---------- */
+let rot = 0, spinning = false;
+const activeSongs = () => S.songs.filter(s => !S.wheel.excluded.includes(s.id) && !S.wheel.extracted.includes(s.id));
+function renderWheel() {
+  const act = activeSongs();
+  $('#wheel-info').textContent = act.length ? `${act.length} brani in ruota` : 'Ruota vuota';
+  $('#spin-btn').disabled = spinning || act.length === 0;
+  const ex = S.wheel.extracted.map(songById).filter(Boolean);
+  $('#extracted').innerHTML = ex.length ? ex.map((s, i) => `
+    <div class="row"><div class="num">${i + 1}</div>
+    <div class="grow"><div class="t">${esc(s.title)}</div><div class="sub">${fmt(s.dur)}</div></div>
+    <button class="ico" data-act="putback" data-id="${s.id}" title="Rimetti in ruota">↩</button></div>`).join('')
+    : '<p class="empty">Nessun brano estratto</p>';
+  $('#wheel-songs').innerHTML = S.songs.length ? sortSongs(S.songs).map(s => {
+    const out = S.wheel.extracted.includes(s.id);
+    return `<label class="row chk" style="${out ? 'opacity:.5' : ''}">
+      <input type="checkbox" data-act="toggle-excl" data-id="${s.id}" ${S.wheel.excluded.includes(s.id) ? '' : 'checked'}>
+      <span class="grow"><span class="t">${esc(s.title)}</span>${out ? ' <span class="sub">(estratto)</span>' : ''}</span></label>`;
+  }).join('') : '<p class="empty">Aggiungi brani al repertorio</p>';
+  drawWheel();
+}
+function drawWheel(hl) {
+  const c = $('#wheel'), size = c.clientWidth || 320, dpr = window.devicePixelRatio || 1;
+  if (c.width !== Math.round(size * dpr)) { c.width = c.height = Math.round(size * dpr); }
+  const ctx = c.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, size, size);
+  const cx = size / 2, cy = size / 2, R = size / 2 - 14;
+  const act = activeSongs(), n = act.length;
+  if (!n) {
+    ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2);
+    ctx.fillStyle = '#131c2f'; ctx.fill(); ctx.strokeStyle = '#243253'; ctx.lineWidth = 3; ctx.stroke();
+    ctx.fillStyle = '#8fa0c4'; ctx.font = '16px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Nessun brano in ruota', cx, cy); drawPointer(ctx, cx, size); return;
+  }
+  const step = Math.PI * 2 / n;
+  for (let i = 0; i < n; i++) {
+    const a0 = rot + i * step - Math.PI / 2, a1 = a0 + step;
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, R, a0, a1); ctx.closePath();
+    ctx.fillStyle = `hsl(${(i * 137.5) % 360},55%,${act[i].own ? 42 : 36}%)`; ctx.fill();
+    ctx.strokeStyle = '#0b1220'; ctx.lineWidth = n > 1 ? 2 : 0; ctx.stroke();
+    ctx.save(); ctx.translate(cx, cy); ctx.rotate(a0 + step / 2);
+    const fs = Math.max(9, Math.min(16, step * R * 0.55));
+    ctx.font = `600 ${fs}px system-ui`; ctx.fillStyle = '#fff'; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    let label = act[i].title; const maxW = R - 36;
+    while (label.length > 1 && ctx.measureText(label).width > maxW) label = label.slice(0, -2) + '…';
+    ctx.fillText(label, R - 12, 0); ctx.restore();
+  }
+  ctx.beginPath(); ctx.arc(cx, cy, 18, 0, Math.PI * 2); ctx.fillStyle = '#0b1220'; ctx.fill();
+  ctx.strokeStyle = '#5cc8ff'; ctx.lineWidth = 3; ctx.stroke();
+  drawPointer(ctx, cx, size);
+}
+function drawPointer(ctx, cx) {
+  ctx.beginPath(); ctx.moveTo(cx - 13, 2); ctx.lineTo(cx + 13, 2); ctx.lineTo(cx, 30); ctx.closePath();
+  ctx.fillStyle = '#fff'; ctx.fill(); ctx.strokeStyle = '#0b1220'; ctx.lineWidth = 2; ctx.stroke();
+}
+function spin() {
+  if (spinning) return;
+  const act = activeSongs(); if (!act.length) return;
+  const n = act.length, step = Math.PI * 2 / n, TAU = Math.PI * 2;
+  const w = Math.floor(Math.random() * n);
+  const jitter = (Math.random() - 0.5) * 0.7;
+  const desired = (((-(w + 0.5 + jitter) * step) % TAU) + TAU) % TAU;
+  const cur = ((rot % TAU) + TAU) % TAU;
+  const delta = (((desired - cur) % TAU) + TAU) % TAU + TAU * (5 + Math.floor(Math.random() * 4));
+  const start = rot, dur = 4500, t0 = performance.now();
+  spinning = true; $('#spin-btn').disabled = true; $('#result').style.display = 'none';
+  const winner = act[w];
+  (function frame(now) {
+    const t = Math.min(1, (now - t0) / dur);
+    const e = 1 - Math.pow(1 - t, 4);
+    rot = start + delta * e; drawWheel();
+    if (t < 1) return requestAnimationFrame(frame);
+    spinning = false; rot = rot % TAU;
+    S.wheel.extracted.push(winner.id); save();
+    const r = $('#result'); r.style.display = 'block';
+    r.innerHTML = `${esc(winner.title)}<small>${fmt(winner.dur)}${winner.own ? ' · nostro' : ''}</small>`;
+    if (navigator.vibrate) navigator.vibrate(200);
+    renderWheel();
+  })(t0);
+}
+
+/* ---------- Backup ---------- */
+function exportData() {
+  const blob = new Blob([JSON.stringify(S, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = `repertorio-${todayStr()}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+function importData(file) {
+  const rd = new FileReader();
+  rd.onload = () => {
+    try {
+      const d = JSON.parse(rd.result);
+      if (!d || !Array.isArray(d.songs) || !Array.isArray(d.setlists)) throw 0;
+      if (!confirm(`Importare ${d.songs.length} brani e ${d.setlists.length} scalette?\nI dati attuali verranno sostituiti.`)) return;
+      S = Object.assign(defaults(), d); S.wheel = Object.assign({ excluded: [], extracted: [] }, S.wheel);
+      save(); editingSl = null; resetSongForm(); showTab('songs'); toast('Importato');
+    } catch (e) { toast('File non valido'); }
+  };
+  rd.readAsText(file);
+}
+
+/* ---------- Eventi ---------- */
+document.addEventListener('click', e => {
+  const nb = e.target.closest('nav button'); if (nb) return showTab(nb.dataset.tab);
+  const el = e.target.closest('[data-act]'); if (!el) return;
+  const id = el.dataset.id, i = +el.dataset.i;
+  switch (el.dataset.act) {
+    case 'save-song': saveSong(); break;
+    case 'cancel-song': resetSongForm(); break;
+    case 'edit-song': editSong(id); break;
+    case 'del-song': delSong(id); break;
+    case 'filter':
+      filter = el.dataset.f;
+      document.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c === el));
+      renderSongs(); break;
+    case 'export': exportData(); break;
+    case 'import': $('#file-in').click(); break;
+    case 'new-set': newSet(); break;
+    case 'open-set': editingSl = id; renderSetlists(); window.scrollTo(0, 0); break;
+    case 'dup-set': dupSet(id); break;
+    case 'back-sets': editingSl = null; renderSetlists(); break;
+    case 'del-set': delSet(); break;
+    case 'up': move(i, -1); break;
+    case 'down': move(i, 1); break;
+    case 'rm': { const l = curSl(); removeItem(l, i); save(); renderEditor(); break; }
+    case 'toggle-link': { const l = curSl(); l.links[i] = (l.links[i] || 'cambio') === 'segue' ? 'cambio' : 'segue'; save(); renderEditor(); break; }
+    case 'open-picker': openPicker(); break;
+    case 'close-picker': if (el.id === 'picker' || el.tagName === 'BUTTON') $('#picker').classList.remove('on'); break;
+    case 'add-song': addToSet(id); break;
+    case 'copy-set': copySet(); break;
+    case 'spin': spin(); break;
+    case 'reset-wheel':
+      if (spinning) break;
+      S.wheel.extracted = []; save(); $('#result').style.display = 'none'; renderWheel(); toast('Ruota resettata'); break;
+    case 'include-all': if (spinning) break; S.wheel.excluded = []; save(); renderWheel(); break;
+    case 'putback': if (spinning) break; S.wheel.extracted = S.wheel.extracted.filter(x => x !== id); save(); renderWheel(); break;
+  }
+});
+document.addEventListener('change', e => {
+  const el = e.target;
+  if (el.dataset.act === 'toggle-excl') {
+    if (spinning) { el.checked = !el.checked; return; }
+    const ex = S.wheel.excluded, id = el.dataset.id;
+    if (el.checked) S.wheel.excluded = ex.filter(x => x !== id); else if (!ex.includes(id)) ex.push(id);
+    save(); renderWheel();
+  }
+  if (el.id === 'file-in' && el.files[0]) { importData(el.files[0]); el.value = ''; }
+  if (el.id === 'sl-date') { const l = curSl(); if (l) { l.date = el.value; save(); } }
+});
+document.addEventListener('input', e => {
+  const el = e.target;
+  if (el.id === 's-search') { q = el.value.trim().toLowerCase(); renderSongs(); }
+  if (el.id === 'p-search') renderPicker();
+  if (el.id === 'sl-name') { const l = curSl(); if (l) { l.name = el.value; save(); $('#sl-edit-view h1').textContent = l.name || 'Scaletta'; } }
+});
+$('#s-title').addEventListener('keydown', e => { if (e.key === 'Enter') $('#s-dur').focus(); });
+$('#s-dur').addEventListener('keydown', e => { if (e.key === 'Enter') saveSong(); });
+window.addEventListener('resize', () => { if ($('#tab-wheel').classList.contains('on')) drawWheel(); });
+
+renderSongs();
+</script>
+</body>
+</html>
