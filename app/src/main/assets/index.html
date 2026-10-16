@@ -149,6 +149,10 @@ button.mini{padding:7px 0;min-width:34px;width:34px;font-size:14px}
     <button class="pri" id="spin-btn" data-act="spin" style="font-size:18px;padding:14px">GIRA!</button>
   </div>
   <div class="sub" id="wheel-info" style="text-align:center;margin:8px 0"></div>
+  <div class="btns" style="margin-bottom:6px">
+    <button data-act="only-cover" style="color:var(--acc);font-weight:700">Solo cover</button>
+    <button data-act="only-own" style="color:#fff;font-weight:700">Solo nostri</button>
+  </div>
 
   <h2>Estratti</h2>
   <div class="card" id="extracted"></div>
@@ -710,6 +714,16 @@ document.addEventListener('click', e => {
     case 'reset-wheel':
       if (spinning) break;
       S.wheel.extracted = []; save(); $('#result').style.display = 'none'; renderWheel(); toast('Ruota resettata'); break;
+    case 'only-cover': case 'only-own': {
+      if (spinning) break;
+      const own = el.dataset.act === 'only-own';
+      const keep = S.songs.filter(s => !!s.own === own);
+      if (!keep.length) { toast(own ? 'Nessun pezzo nostro nel repertorio' : 'Nessuna cover nel repertorio'); break; }
+      S.wheel.extracted = [];
+      S.wheel.excluded = S.songs.filter(s => !!s.own !== own).map(s => s.id);
+      save(); $('#result-modal').classList.remove('on'); pending = null; renderWheel();
+      toast(own ? 'Ruota: solo i nostri pezzi' : 'Ruota: solo cover'); break;
+    }
     case 'include-all': if (spinning) break; S.wheel.excluded = []; save(); renderWheel(); break;
     case 'putback': if (spinning) break; S.wheel.extracted = S.wheel.extracted.filter(x => x !== id); save(); renderWheel(); break;
   }
