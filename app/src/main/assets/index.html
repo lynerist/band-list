@@ -395,13 +395,14 @@ function renderPicker() {
   const list = sortSongs(S.songs.filter(s => s.title.toLowerCase().includes(qq)));
   $('#p-list').innerHTML = list.length ? list.map(s => {
     const n = l.items.filter(x => x === s.id).length;
-    return `<div class="row" data-act="add-song" data-id="${s.id}" style="cursor:pointer">
+    return `<div class="row" data-act="add-song" data-id="${s.id}" style="cursor:pointer${n ? ';opacity:.5' : ''}">
       <div class="grow"><div class="t">${esc(s.title)}${s.own ? '<span class="badge">nostro</span>' : ''}</div><div class="sub">${fmt(s.dur)}</div></div>
-      ${n ? `<span class="sub">×${n}</span>` : ''}<button class="ico">+</button></div>`;
+      <button class="ico">${n ? '✓' : '+'}</button></div>`;
   }).join('') : '<p class="empty">Nessun brano nel repertorio</p>';
 }
 function addToSet(id) {
   const l = curSl(); if (!l) return;
+  if (l.items.includes(id)) return toast('Brano già in scaletta');
   if (l.items.length) l.links.push('cambio');
   l.items.push(id); save(); renderPicker(); renderEditor();
 }
