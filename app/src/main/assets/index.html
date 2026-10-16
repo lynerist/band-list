@@ -461,9 +461,14 @@ function spin() {
 
 /* ---------- Backup ---------- */
 function exportData() {
-  const blob = new Blob([JSON.stringify(S, null, 2)], { type: 'application/json' });
+  const json = JSON.stringify(S, null, 2), fname = `repertorio-${todayStr()}.json`;
+  if (window.AndroidBridge) {
+    toast(AndroidBridge.saveFile(fname, json) === 'ok' ? 'Backup salvato in Download' : 'Errore nel salvataggio');
+    return;
+  }
+  const blob = new Blob([json], { type: 'application/json' });
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob); a.download = `repertorio-${todayStr()}.json`;
+  a.href = URL.createObjectURL(blob); a.download = fname;
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 2000);
 }
