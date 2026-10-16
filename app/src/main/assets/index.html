@@ -69,8 +69,9 @@ button.mini{padding:7px 0;min-width:34px;width:34px;font-size:14px}
 .row.edit{gap:6px;align-items:flex-start}
 .row.edit .num{padding-top:2px}
 .badge{white-space:nowrap;overflow-wrap:normal;display:inline-block}
-.t.own{color:var(--ok)}
-.row.own-row{background:rgba(67,214,160,.13);border-radius:10px;padding:10px 8px;border-bottom-color:transparent}
+.t.own{color:#fff}
+.t.cover{color:var(--acc)}
+.row.own-row{background:rgba(255,255,255,.08);border-radius:10px;padding:10px 8px;border-bottom-color:transparent}
 #song-list{margin-bottom:76px}
 .vlink{margin:2px 0 2px 32px;padding:6px 10px;font-size:13px;border-radius:8px;border:1px dashed var(--warn);color:var(--warn)}
 .vlink.segue{border:1px solid var(--acc2);color:var(--acc2)}
@@ -286,7 +287,7 @@ function renderSongs() {
   $('#song-stats').textContent = `${S.songs.length} brani (${S.songs.filter(s => s.own).length} nostri) · ${fmt(tot)}`;
   $('#song-list').innerHTML = list.length ? list.map(s => `
     <div class="row${s.own ? ' own-row' : ''}">
-      <div class="grow" data-act="edit-song" data-id="${s.id}" style="cursor:pointer"><div class="t">${esc(s.title)}</div>
+      <div class="grow" data-act="edit-song" data-id="${s.id}" style="cursor:pointer"><div class="t ${s.own ? 'own' : 'cover'}">${esc(s.title)}</div>
       <div class="sub">${durTxt(s.dur)}</div></div>
       <button class="ico" data-act="edit-song" data-id="${s.id}">✎</button>
     </div>`).join('') : '<p class="empty">Nessun brano</p>';
@@ -339,7 +340,7 @@ function delSong(id) {
 }
 
 /* ---------- Scalette ---------- */
-let editingSl = null, viewingSl = null, editBack = 'list';
+let editingSl = null, viewingSl = null, editBack = 'list', draft = null, draftSnap = '';
 const todayStr = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
 const fmtDate = d => d ? new Date(d + 'T12:00:00').toLocaleDateString('it-IT', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' }) : 'senza data';
 const slDur = l => l.items.reduce((a, id) => a + (songById(id)?.dur || 0), 0);
@@ -371,7 +372,7 @@ function renderSetlists() {
     </div>`).join('') : '<p class="empty">Nessuna scaletta. Creane una!</p>';
 }
 function renderEditor() {
-  const l = S.setlists.find(x => x.id === editingSl);
+  const l = draft;
   if (!l) { editingSl = null; return renderSetlists(); }
   $('#sl-edit-view h1').textContent = l.name || 'Scaletta';
   if (document.activeElement !== $('#sl-name')) $('#sl-name').value = l.name || '';
@@ -383,7 +384,7 @@ function renderEditor() {
     const s = songById(id);
     const row = `<div class="row edit">
       <div class="num">${i + 1}</div>
-      <div class="grow"><div class="t${s?.own ? ' own' : ''}">${esc(s?.title || '?')}</div><div class="sub">${durTxt(s?.dur)}</div></div>
+      <div class="grow"><div class="t ${s?.own ? 'own' : 'cover'}">${esc(s?.title || '?')}</div><div class="sub">${durTxt(s?.dur)}</div></div>
       <button class="ico mini" data-act="up" data-i="${i}" ${i === 0 ? 'disabled' : ''}>▲</button>
       <button class="ico mini" data-act="down" data-i="${i}" ${i === l.items.length - 1 ? 'disabled' : ''}>▼</button>
       <button class="ico mini dng" data-act="rm" data-i="${i}">✕</button>
@@ -410,7 +411,7 @@ function renderViewer() {
     const s = songById(id);
     const row = `<div class="row">
       <div class="num">${i + 1}</div>
-      <div class="grow"><div class="t${s?.own ? ' own' : ''}">${esc(s?.title || '?')}</div><div class="sub">${durTxt(s?.dur)}</div></div>
+      <div class="grow"><div class="t ${s?.own ? 'own' : 'cover'}">${esc(s?.title || '?')}</div><div class="sub">${durTxt(s?.dur)}</div></div>
     </div>`;
     if (i < l.items.length - 1) {
       const t = l.links[i] || 'cambio', n = noteOf(l, i);
@@ -421,12 +422,29 @@ function renderViewer() {
 }
 function leaveEditor() {
   viewingSl = editBack === 'view' ? editingSl : null;
-  editingSl = null; renderSetlists(); window.scrollTo(0, 0);
+  editingSl = null; draft = null; renderSetlists(); window.scrollTo(0, 0);
 }
-function curSl() { return S.setlists.find(x => x.id === (editingSl || viewingSl)); }
+function tryLeaveEditor() {
+  if (draft && JSON.stringify(draft) !== draftSnap && !confirm('Uscire senza salvare? Le modifiche andranno perse.')) return;
+  leaveEditor();
+}
+function startEdit(id, back) {
+  const l = S.setlists.find(x => x.id === id); if (!l) return;
+  draft = JSON.parse(JSON.stringify(l)); draftSnap = JSON.stringify(draft);
+  editBack = back; editingSl = id; viewingSl = null;
+  renderSetlists(); window.scrollTo(0, 0);
+}
+function commitDraft() {
+  if (!draft) return;
+  const copy = JSON.parse(JSON.stringify(draft));
+  const i = S.setlists.findIndex(x => x.id === copy.id);
+  if (i >= 0) S.setlists[i] = copy; else S.setlists.push(copy);
+  save(); toast('Scaletta salvata'); leaveEditor();
+}
+function curSl() { return editingSl ? draft : S.setlists.find(x => x.id === viewingSl); }
 function newSet() {
   const l = { id: uid(), name: '', date: todayStr(), items: [], links: [], notes: [] };
-  S.setlists.push(l); save(); editBack = 'list'; editingSl = l.id; renderSetlists();
+  editBack = 'list'; editingSl = l.id; draft = l; draftSnap = JSON.stringify(draft); renderSetlists();
 }
 function dupSet(id) {
   const l = S.setlists.find(x => x.id === id); if (!l) return;
@@ -436,7 +454,7 @@ function dupSet(id) {
 function delSet() {
   const l = curSl(); if (!l) return;
   if (!confirm(`Eliminare la scaletta "${l.name || 'Scaletta'}"?`)) return;
-  S.setlists = S.setlists.filter(x => x.id !== l.id); editingSl = null; viewingSl = null; save(); renderSetlists();
+  S.setlists = S.setlists.filter(x => x.id !== l.id); editingSl = null; viewingSl = null; draft = null; save(); renderSetlists();
 }
 function move(i, d) {
   const l = curSl(), j = i + d;
@@ -475,7 +493,7 @@ function renderPicker() {
   $('#p-list').innerHTML = list.length ? list.map(s => {
     const n = l.items.filter(x => x === s.id).length;
     return `<div class="row" data-act="add-song" data-id="${s.id}" style="cursor:pointer${n ? ';opacity:.5' : ''}">
-      <div class="grow"><div class="t${s.own ? ' own' : ''}">${esc(s.title)}</div><div class="sub">${durTxt(s.dur)}</div></div>
+      <div class="grow"><div class="t ${s.own ? 'own' : 'cover'}">${esc(s.title)}</div><div class="sub">${durTxt(s.dur)}</div></div>
       <button class="ico">${n ? '✓' : '+'}</button></div>`;
   }).join('') : '<p class="empty">Nessun brano nel repertorio</p>';
 }
@@ -597,7 +615,7 @@ function importData(file) {
       if (!d || !Array.isArray(d.songs) || !Array.isArray(d.setlists)) throw 0;
       if (!confirm(`Importare ${d.songs.length} brani e ${d.setlists.length} scalette?\nI dati attuali verranno sostituiti.`)) return;
       S = Object.assign(defaults(), d); S.wheel = Object.assign({ excluded: [], extracted: [] }, S.wheel);
-      save(); editingSl = null; resetSongForm(); showTab('songs'); toast('Importato');
+      save(); editingSl = null; viewingSl = null; draft = null; resetSongForm(); showTab('songs'); toast('Importato');
     } catch (e) { toast('File non valido'); }
   };
   rd.readAsText(file);
@@ -633,13 +651,13 @@ document.addEventListener('click', e => {
     case 'import': $('#file-in').click(); break;
     case 'new-set': newSet(); break;
     case 'view-set': viewingSl = id; renderSetlists(); window.scrollTo(0, 0); break;
-    case 'open-set': editBack = 'list'; editingSl = id; viewingSl = null; renderSetlists(); window.scrollTo(0, 0); break;
-    case 'edit-set': editBack = 'view'; editingSl = viewingSl; viewingSl = null; renderSetlists(); window.scrollTo(0, 0); break;
+    case 'open-set': startEdit(id, 'list'); break;
+    case 'edit-set': startEdit(viewingSl, 'view'); break;
     case 'dup-set': dupSet(id); break;
     case 'back-sets':
-      if (editingSl) { leaveEditor(); break; }
+      if (editingSl) { tryLeaveEditor(); break; }
       viewingSl = null; renderSetlists(); window.scrollTo(0, 0); break;
-    case 'save-set': save(); leaveEditor(); toast('Scaletta salvata'); break;
+    case 'save-set': commitDraft(); break;
     case 'del-set': delSet(); break;
     case 'up': move(i, -1); break;
     case 'down': move(i, 1); break;
@@ -690,7 +708,7 @@ window.handleBack = function () {
     if (m.id === 'result-modal') commitPending();
     return true;
   }
-  if (editingSl) { leaveEditor(); return true; }
+  if (editingSl) { tryLeaveEditor(); return true; }
   if (viewingSl && $('#tab-sets').classList.contains('on')) { viewingSl = null; renderSetlists(); return true; }
   if (!$('#tab-songs').classList.contains('on')) { showTab('songs'); return true; }
   return false;
