@@ -70,6 +70,8 @@ button.mini{padding:7px 0;min-width:34px;width:34px;font-size:14px}
 .row.edit .num{padding-top:2px}
 .badge{white-space:nowrap;overflow-wrap:normal;display:inline-block}
 .t.own{color:var(--ok)}
+.row.own-row{background:rgba(67,214,160,.13);border-radius:10px;padding:10px 8px;border-bottom-color:transparent}
+#song-list{margin-bottom:76px}
 .vlink{margin:2px 0 2px 32px;padding:6px 10px;font-size:13px;border-radius:8px;border:1px dashed var(--warn);color:var(--warn)}
 .vlink.segue{border:1px solid var(--acc2);color:var(--acc2)}
 .vlink b{color:var(--txt)}
@@ -283,8 +285,8 @@ function renderSongs() {
   const tot = S.songs.reduce((a, s) => a + s.dur, 0);
   $('#song-stats').textContent = `${S.songs.length} brani (${S.songs.filter(s => s.own).length} nostri) · ${fmt(tot)}`;
   $('#song-list').innerHTML = list.length ? list.map(s => `
-    <div class="row">
-      <div class="grow" data-act="edit-song" data-id="${s.id}" style="cursor:pointer"><div class="t">${esc(s.title)}${s.own ? '<span class="badge">nostro</span>' : ''}</div>
+    <div class="row${s.own ? ' own-row' : ''}">
+      <div class="grow" data-act="edit-song" data-id="${s.id}" style="cursor:pointer"><div class="t">${esc(s.title)}</div>
       <div class="sub">${durTxt(s.dur)}</div></div>
       <button class="ico" data-act="edit-song" data-id="${s.id}">✎</button>
     </div>`).join('') : '<p class="empty">Nessun brano</p>';
