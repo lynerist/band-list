@@ -116,8 +116,8 @@ button.mini{padding:7px 0;min-width:34px;width:34px;font-size:14px}
     </div>
     <div class="card" id="sl-items"></div>
     <div class="btns">
-      <button class="pri" data-act="open-picker">+ Aggiungi brani</button>
-      <button data-act="copy-set">📋 Copia testo</button>
+      <button data-act="open-picker">+ Aggiungi brani</button>
+      <button class="pri" data-act="save-set">✓ Salva</button>
     </div>
   </div>
   <div id="sl-view" style="display:none">
@@ -337,7 +337,7 @@ function delSong(id) {
 }
 
 /* ---------- Scalette ---------- */
-let editingSl = null, viewingSl = null;
+let editingSl = null, viewingSl = null, editBack = 'list';
 const todayStr = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
 const fmtDate = d => d ? new Date(d + 'T12:00:00').toLocaleDateString('it-IT', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' }) : 'senza data';
 const slDur = l => l.items.reduce((a, id) => a + (songById(id)?.dur || 0), 0);
@@ -417,10 +417,14 @@ function renderViewer() {
     return row;
   }).join('') : '<p class="empty">Scaletta vuota</p>';
 }
+function leaveEditor() {
+  viewingSl = editBack === 'view' ? editingSl : null;
+  editingSl = null; renderSetlists(); window.scrollTo(0, 0);
+}
 function curSl() { return S.setlists.find(x => x.id === (editingSl || viewingSl)); }
 function newSet() {
   const l = { id: uid(), name: '', date: todayStr(), items: [], links: [], notes: [] };
-  S.setlists.push(l); save(); editingSl = l.id; renderSetlists();
+  S.setlists.push(l); save(); editBack = 'list'; editingSl = l.id; renderSetlists();
 }
 function dupSet(id) {
   const l = S.setlists.find(x => x.id === id); if (!l) return;
@@ -627,12 +631,13 @@ document.addEventListener('click', e => {
     case 'import': $('#file-in').click(); break;
     case 'new-set': newSet(); break;
     case 'view-set': viewingSl = id; renderSetlists(); window.scrollTo(0, 0); break;
-    case 'open-set': editingSl = id; viewingSl = null; renderSetlists(); window.scrollTo(0, 0); break;
-    case 'edit-set': editingSl = viewingSl; viewingSl = null; renderSetlists(); window.scrollTo(0, 0); break;
+    case 'open-set': editBack = 'list'; editingSl = id; viewingSl = null; renderSetlists(); window.scrollTo(0, 0); break;
+    case 'edit-set': editBack = 'view'; editingSl = viewingSl; viewingSl = null; renderSetlists(); window.scrollTo(0, 0); break;
     case 'dup-set': dupSet(id); break;
     case 'back-sets':
-      if (editingSl) { viewingSl = editingSl; editingSl = null; } else viewingSl = null;
-      renderSetlists(); window.scrollTo(0, 0); break;
+      if (editingSl) { leaveEditor(); break; }
+      viewingSl = null; renderSetlists(); window.scrollTo(0, 0); break;
+    case 'save-set': save(); leaveEditor(); toast('Scaletta salvata'); break;
     case 'del-set': delSet(); break;
     case 'up': move(i, -1); break;
     case 'down': move(i, 1); break;
@@ -683,7 +688,7 @@ window.handleBack = function () {
     if (m.id === 'result-modal') commitPending();
     return true;
   }
-  if (editingSl) { viewingSl = editingSl; editingSl = null; renderSetlists(); return true; }
+  if (editingSl) { leaveEditor(); return true; }
   if (viewingSl && $('#tab-sets').classList.contains('on')) { viewingSl = null; renderSetlists(); return true; }
   if (!$('#tab-songs').classList.contains('on')) { showTab('songs'); return true; }
   return false;
