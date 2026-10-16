@@ -397,7 +397,7 @@ function renderEditor() {
       const t = l.links[i] || 'cambio';
       return row + `<div class="between">
         <button class="link ${t}" data-act="toggle-link" data-i="${i}">${t === 'segue' ? '⤵ Concatenati (attacco diretto)' : '⏸ Cambio · tocca per concatenare'}</button>
-        <input type="text" class="note" data-note="${i}" value="${esc(noteOf(l, i))}" placeholder="Nota fra i due pezzi (es. discorso)" autocomplete="off">
+        ${t === 'segue' ? '' : `<input type="text" class="note" data-note="${i}" value="${esc(noteOf(l, i))}" placeholder="Nota fra i due pezzi (es. discorso)" autocomplete="off">`}
       </div>`;
     }
     return row;
@@ -418,11 +418,19 @@ function renderViewer() {
       <div class="grow"><div class="t ${s?.own ? 'own' : 'cover'}">${esc(s?.title || '?')}</div><div class="sub">${durTxt(s?.dur)}</div></div>
     </div>`;
     if (i < l.items.length - 1) {
-      const t = l.links[i] || 'cambio', n = noteOf(l, i);
+      const t = l.links[i] || 'cambio', n = t === 'segue' ? '' : noteOf(l, i);
       return row + `<div class="vlink ${t}">${t === 'segue' ? '⤵ attacco diretto' : '⏸ cambio'}${n ? ` · <b>${esc(n)}</b>` : ''}</div>`;
     }
     return row;
   }).join('') : '<p class="empty">Scaletta vuota</p>';
+}
+function goSetsList() {
+  if (editingSl) {
+    if (draft && JSON.stringify(draft) !== draftSnap && !confirm('Uscire senza salvare? Le modifiche andranno perse.')) return;
+    editingSl = null; draft = null;
+  }
+  viewingSl = null;
+  showTab('sets');
 }
 function leaveEditor() {
   viewingSl = editBack === 'view' ? editingSl : null;
@@ -472,8 +480,8 @@ function setText(l) {
     const s = songById(id);
     lines.push(`${i + 1}. ${s?.title || '?'} (${durTxt(s?.dur)})`);
     if (i < l.items.length - 1) {
-      const n = noteOf(l, i);
-      lines.push(((l.links[i] || 'cambio') === 'segue' ? '   ↓ attacco diretto' : '   — cambio') + (n ? ': ' + n : ''));
+      const sg = (l.links[i] || 'cambio') === 'segue', n = sg ? '' : noteOf(l, i);
+      lines.push((sg ? '   ↓ attacco diretto' : '   — cambio') + (n ? ': ' + n : ''));
     }
   });
   return lines.join('\n');
@@ -637,7 +645,7 @@ function importData(file) {
 
 /* ---------- Eventi ---------- */
 document.addEventListener('click', e => {
-  const nb = e.target.closest('nav button'); if (nb) return showTab(nb.dataset.tab);
+  const nb = e.target.closest('nav button'); if (nb) return nb.dataset.tab === 'sets' ? goSetsList() : showTab(nb.dataset.tab);
   const el = e.target.closest('[data-act]'); if (!el) return;
   const id = el.dataset.id, i = +el.dataset.i;
   switch (el.dataset.act) {
