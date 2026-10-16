@@ -108,12 +108,15 @@ public class MainActivity extends Activity {
     }
 
     private static class PdfWriter {
-        static final int W = 595, H = 842, M = 48;
+        static final int W = 595, H = 842, M = 40;
         final PdfDocument doc = new PdfDocument();
+        final boolean dry;
         PdfDocument.Page page;
         Canvas c;
         int n = 0;
         float y;
+
+        PdfWriter(boolean dry) { this.dry = dry; }
 
         void newPage() {
             if (page != null) doc.finishPage(page);
@@ -122,9 +125,9 @@ public class MainActivity extends Activity {
             y = M;
         }
 
-        void text(String text, Paint p, float x, float gapAfter) {
-            if (page == null) newPage();
-            float maxW = W - M - x;
+        void text(String text, Paint p, float gapAfter) {
+            if (!dry && page == null) newPage();
+            float maxW = W - 2 * M;
             int len = text.length(), start = 0;
             while (start < len) {
                 int cnt = p.breakText(text, start, len, true, maxW, null);
@@ -134,9 +137,9 @@ public class MainActivity extends Activity {
                     if (sp > start) cnt = sp - start;
                 }
                 float lh = p.getTextSize() * 1.25f;
-                if (y + lh > H - M) newPage();
+                if (!dry && y + lh > H - M) newPage();
                 y += lh;
-                c.drawText(text.substring(start, start + cnt).trim(), x, y - p.getTextSize() * 0.2f, p);
+                if (!dry) c.drawText(text.substring(start, start + cnt).trim(), W / 2f, y - p.getTextSize() * 0.2f, p);
                 start += cnt;
                 while (start < len && text.charAt(start) == ' ') start++;
             }
@@ -146,44 +149,74 @@ public class MainActivity extends Activity {
         void space(float s) { y += s; }
     }
 
+    private static Paint mkPaint(float size, boolean bold, boolean italic, int color) {
+        Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
+        p.setTextSize(size);
+        p.setTextAlign(Paint.Align.CENTER);
+        p.setColor(color);
+        int style = bold ? Typeface.BOLD : (italic ? Typeface.ITALIC : Typeface.NORMAL);
+        p.setTypeface(Typeface.create(Typeface.DEFAULT, style));
+        return p;
+    }
+
+    private static void renderSetlist(PdfWriter w, JSONObject o, float sz, float extra) throws Exception {
+        JSONArray items = o.getJSONArray("items");
+        JSONArray between = o.getJSONArray("between");
+        Paint title = mkPaint(Math.min(40f, sz * 1.15f), true, false, Color.BLACK);
+        Paint date = mkPaint(Math.max(11f, sz * 0.5f), false, false, Color.DKGRAY);
+        Paint song = mkPaint(sz, true, false, Color.BLACK);
+        Paint small = mkPaint(Math.max(10f, sz * 0.5f), false, true, Color.GRAY);
+
+        w.text(o.getString("title"), title, 2);
+        String d = o.optString("date", "");
+        if (d.length() > 0) w.text(d, date, 0);
+        w.space(sz * 0.9f);
+
+        for (int i = 0; i < items.length(); i++) {
+            w.text((i + 1) + ".  " + items.getString(i), song, 3);
+            if (i < between.length()) {
+                JSONObject b = between.getJSONObject(i);
+                String note = b.optString("note", "").trim();
+                if (b.optBoolean("segue", false)) {
+                    w.text("\u2193 attacco diretto", small, 2);
+                } else if (note.length() > 0) {
+                    w.text("\u2014 " + note, small, 2);
+                }
+                w.space(sz * 0.3f + extra);
+            }
+        }
+    }
+
     private class Bridge {
         @JavascriptInterface
         public String savePdf(String name, String json) {
             try {
                 JSONObject o = new JSONObject(json);
-                JSONArray items = o.getJSONArray("items");
-                JSONArray between = o.getJSONArray("between");
+                int n = o.getJSONArray("items").length();
 
-                Paint title = new Paint(Paint.ANTI_ALIAS_FLAG);
-                title.setTextSize(26); title.setTypeface(Typeface.DEFAULT_BOLD); title.setColor(Color.BLACK);
-                Paint date = new Paint(Paint.ANTI_ALIAS_FLAG);
-                date.setTextSize(13); date.setColor(Color.DKGRAY);
-                Paint song = new Paint(Paint.ANTI_ALIAS_FLAG);
-                song.setTextSize(21); song.setTypeface(Typeface.DEFAULT_BOLD); song.setColor(Color.BLACK);
-                Paint small = new Paint(Paint.ANTI_ALIAS_FLAG);
-                small.setTextSize(11); small.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.ITALIC));
-                small.setColor(Color.GRAY);
-
-                PdfWriter w = new PdfWriter();
-                w.newPage();
-                w.text(o.getString("title"), title, PdfWriter.M, 2);
-                String d = o.optString("date", "");
-                if (d.length() > 0) w.text(d, date, PdfWriter.M, 0);
-                w.space(20);
-
-                for (int i = 0; i < items.length(); i++) {
-                    w.text((i + 1) + ".  " + items.getString(i), song, PdfWriter.M, 4);
-                    if (i < between.length()) {
-                        JSONObject b = between.getJSONObject(i);
-                        String note = b.optString("note", "").trim();
-                        if (b.optBoolean("segue", false)) {
-                            w.text("\u2193 attacco diretto", small, PdfWriter.M + 28, 4);
-                        } else if (note.length() > 0) {
-                            w.text("\u2014 " + note, small, PdfWriter.M + 28, 4);
-                        }
-                        w.space(8);
+                float chosen = 16f;
+                float height = 0f;
+                boolean fits = false;
+                for (float sz = 40f; sz >= 16f; sz -= 1f) {
+                    PdfWriter dry = new PdfWriter(true);
+                    dry.y = 0;
+                    renderSetlist(dry, o, sz, 0f);
+                    if (dry.y <= PdfWriter.H - 2 * PdfWriter.M) {
+                        chosen = sz; height = dry.y; fits = true;
+                        break;
                     }
                 }
+
+                PdfWriter w = new PdfWriter(false);
+                w.newPage();
+                float extra = 0f;
+                if (fits) {
+                    float leftover = PdfWriter.H - 2 * PdfWriter.M - height;
+                    extra = Math.min(leftover / Math.max(n, 1), chosen * 0.8f);
+                    float used = height + extra * Math.max(n - 1, 0);
+                    w.y += Math.max(0f, (PdfWriter.H - 2 * PdfWriter.M - used) / 2f);
+                }
+                renderSetlist(w, o, chosen, extra);
                 if (w.page != null) w.doc.finishPage(w.page);
 
                 ContentValues v = new ContentValues();
