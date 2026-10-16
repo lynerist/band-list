@@ -56,22 +56,19 @@ canvas{width:100%;aspect-ratio:1;display:block}
 .toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#fff;color:#000;padding:10px 16px;border-radius:20px;font-size:14px;z-index:30;display:none;max-width:90%}
 .hdr{display:flex;align-items:center;gap:8px;margin-bottom:10px}
 .hdr h1{margin:0;flex:1}
+.fab{position:fixed;right:18px;bottom:calc(78px + env(safe-area-inset-bottom));width:58px;height:58px;border-radius:50%;padding:0;font-size:32px;line-height:1;background:linear-gradient(135deg,var(--acc),var(--acc2));color:#04101f;border:0;font-weight:700;box-shadow:0 6px 18px rgba(0,0,0,.5);z-index:9}
+.stepper{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+.stepper button{min-width:68px;height:52px;padding:0 8px;font-size:16px;font-weight:700}
+.stepper input{flex:1;min-width:0;text-align:center;font-size:24px;font-weight:700;margin:0}
+.sheet-bg.on .sheet{animation:up .2s ease}
+@keyframes up{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
 </style>
 </head>
 <body>
 
 <!-- REPERTORIO -->
 <section class="tab on" id="tab-songs">
-  <h1>🎸 Repertorio</h1>
-  <div class="card">
-    <input type="text" id="s-title" placeholder="Titolo del brano" autocomplete="off">
-    <input type="text" id="s-dur" placeholder="Durata (es. 3:45)" inputmode="numeric" autocomplete="off">
-    <label class="chk"><input type="checkbox" id="s-own"> Pezzo nostro (inedito)</label>
-    <div class="btns">
-      <button class="pri" id="s-save" data-act="save-song">Aggiungi</button>
-      <button id="s-cancel" data-act="cancel-song" style="display:none">Annulla</button>
-    </div>
-  </div>
+  <div class="hdr"><h1>🎸 Repertorio</h1><button class="ico" data-act="open-settings" aria-label="Impostazioni">⚙️</button></div>
 
   <input type="search" id="s-search" placeholder="Cerca…">
   <div class="chips">
@@ -82,15 +79,7 @@ canvas{width:100%;aspect-ratio:1;display:block}
   <div class="sub" id="song-stats" style="margin:0 0 6px 4px"></div>
   <div class="card" id="song-list"></div>
 
-  <h2>Backup</h2>
-  <div class="card">
-    <p class="sub" style="margin-top:0">I dati restano nel browser del telefono. Esporta ogni tanto un backup.</p>
-    <div class="btns">
-      <button data-act="export">⬇ Esporta</button>
-      <button data-act="import">⬆ Importa</button>
-    </div>
-    <input type="file" id="file-in" accept=".json,application/json" style="display:none">
-  </div>
+  <button class="fab" data-act="new-song" aria-label="Nuovo brano">+</button>
 </section>
 
 <!-- SCALETTE -->
@@ -143,10 +132,45 @@ canvas{width:100%;aspect-ratio:1;display:block}
   <div class="card" id="wheel-songs"></div>
 </section>
 
+<!-- SONG MODAL -->
+<div class="sheet-bg" id="song-modal" data-act="close-modal">
+  <div class="sheet">
+    <div class="hdr"><h1 id="sm-head">Nuovo brano</h1><button class="ico" data-act="close-modal">✕</button></div>
+    <input type="text" id="s-title" placeholder="Titolo del brano" autocomplete="off">
+    <div class="sub" style="margin:2px 2px 6px">Durata (m:ss)</div>
+    <div class="stepper">
+      <button data-act="dur-minus">−15s</button>
+      <input type="text" id="s-dur" value="3:00" autocomplete="off">
+      <button data-act="dur-plus">+15s</button>
+    </div>
+    <label class="chk"><input type="checkbox" id="s-own"> Pezzo nostro (inedito)</label>
+    <div class="btns" style="margin-top:8px">
+      <button class="dng" id="sm-del" data-act="del-song-modal" style="display:none">🗑 Elimina</button>
+      <button class="pri" data-act="save-song">Salva</button>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+<div class="sheet-bg" id="settings" data-act="close-modal">
+  <div class="sheet">
+    <div class="hdr"><h1>⚙️ Impostazioni</h1><button class="ico" data-act="close-modal">✕</button></div>
+    <h2 style="margin-top:4px">Backup</h2>
+    <div class="card">
+      <p class="sub" style="margin-top:0">I dati restano nel telefono. L'export salva un file JSON nella cartella Download.</p>
+      <div class="btns">
+        <button data-act="export">⬇ Esporta</button>
+        <button data-act="import">⬆ Importa</button>
+      </div>
+      <input type="file" id="file-in" accept=".json,application/json" style="display:none">
+    </div>
+  </div>
+</div>
+
 <!-- PICKER -->
-<div class="sheet-bg" id="picker" data-act="close-picker">
-  <div class="sheet" onclick="event.stopPropagation()">
-    <div class="hdr"><h1>Aggiungi brani</h1><button class="pri" data-act="close-picker">Fatto</button></div>
+<div class="sheet-bg" id="picker" data-act="close-modal">
+  <div class="sheet">
+    <div class="hdr"><h1>Aggiungi brani</h1><button class="pri" data-act="close-modal">Fatto</button></div>
     <input type="search" id="p-search" placeholder="Cerca…">
     <div class="scroll" id="p-list"></div>
   </div>
@@ -222,17 +246,35 @@ function renderSongs() {
   $('#song-stats').textContent = `${S.songs.length} brani (${S.songs.filter(s => s.own).length} nostri) · ${fmt(tot)}`;
   $('#song-list').innerHTML = list.length ? list.map(s => `
     <div class="row">
-      <div class="grow"><div class="t">${esc(s.title)}${s.own ? '<span class="badge">nostro</span>' : ''}</div>
+      <div class="grow" data-act="edit-song" data-id="${s.id}" style="cursor:pointer"><div class="t">${esc(s.title)}${s.own ? '<span class="badge">nostro</span>' : ''}</div>
       <div class="sub">${fmt(s.dur)}</div></div>
       <button class="ico" data-act="edit-song" data-id="${s.id}">✎</button>
       <button class="ico dng" data-act="del-song" data-id="${s.id}">🗑</button>
     </div>`).join('') : '<p class="empty">Nessun brano</p>';
 }
+function openSongModal(id) {
+  const s = id ? songById(id) : null;
+  editingSong = s ? s.id : null;
+  $('#sm-head').textContent = s ? 'Modifica brano' : 'Nuovo brano';
+  $('#s-title').value = s ? s.title : '';
+  $('#s-dur').value = fmt(s ? s.dur : 180);
+  $('#s-own').checked = s ? !!s.own : false;
+  $('#sm-del').style.display = s ? '' : 'none';
+  $('#song-modal').classList.add('on');
+  if (!s) setTimeout(() => $('#s-title').focus(), 80);
+}
+function closeSongModal() { editingSong = null; $('#song-modal').classList.remove('on'); }
+function resetSongForm() { closeSongModal(); }
+function adjustDur(d) {
+  let v = parseDur($('#s-dur').value);
+  if (isNaN(v)) v = 180;
+  $('#s-dur').value = fmt(Math.max(15, v + d));
+}
 function saveSong() {
   const title = $('#s-title').value.trim();
   const dur = parseDur($('#s-dur').value);
   if (!title) return toast('Inserisci il titolo');
-  if (isNaN(dur)) return toast('Durata non valida (usa es. 3:45)');
+  if (isNaN(dur) || dur <= 0) return toast('Durata non valida (usa es. 3:45)');
   const own = $('#s-own').checked;
   if (editingSong) {
     const s = songById(editingSong);
@@ -240,19 +282,7 @@ function saveSong() {
   } else {
     S.songs.push({ id: uid(), title, dur, own });
   }
-  save(); resetSongForm(); renderSongs();
-}
-function resetSongForm() {
-  editingSong = null;
-  $('#s-title').value = ''; $('#s-dur').value = ''; $('#s-own').checked = false;
-  $('#s-save').textContent = 'Aggiungi'; $('#s-cancel').style.display = 'none';
-}
-function editSong(id) {
-  const s = songById(id); if (!s) return;
-  editingSong = id;
-  $('#s-title').value = s.title; $('#s-dur').value = fmt(s.dur); $('#s-own').checked = s.own;
-  $('#s-save').textContent = 'Salva modifiche'; $('#s-cancel').style.display = '';
-  window.scrollTo(0, 0); $('#s-title').focus();
+  save(); closeSongModal(); renderSongs();
 }
 function delSong(id) {
   const s = songById(id); if (!s) return;
@@ -290,6 +320,7 @@ function renderSetlists() {
         <div class="t">${esc(l.name || 'Scaletta')}</div>
         <div class="sub">${fmtDate(l.date)} · ${l.items.length} brani · ${fmt(slDur(l))}</div>
       </div>
+      <button class="ico" data-act="open-set" data-id="${l.id}" title="Modifica">✎</button>
       <button class="ico" data-act="dup-set" data-id="${l.id}" title="Duplica">⧉</button>
     </div>`).join('') : '<p class="empty">Nessuna scaletta. Creane una!</p>';
 }
@@ -493,8 +524,19 @@ document.addEventListener('click', e => {
   const id = el.dataset.id, i = +el.dataset.i;
   switch (el.dataset.act) {
     case 'save-song': saveSong(); break;
-    case 'cancel-song': resetSongForm(); break;
-    case 'edit-song': editSong(id); break;
+    case 'new-song': openSongModal(); break;
+    case 'edit-song': openSongModal(id); break;
+    case 'del-song-modal': if (editingSong) delSong(editingSong); break;
+    case 'dur-minus': adjustDur(-15); break;
+    case 'dur-plus': adjustDur(15); break;
+    case 'open-settings': $('#settings').classList.add('on'); break;
+    case 'close-modal': {
+      if (el.classList.contains('sheet-bg') && e.target !== el) break;
+      const m = el.closest('.sheet-bg');
+      m.classList.remove('on');
+      if (m.id === 'song-modal') editingSong = null;
+      break;
+    }
     case 'del-song': delSong(id); break;
     case 'filter':
       filter = el.dataset.f;
@@ -512,7 +554,6 @@ document.addEventListener('click', e => {
     case 'rm': { const l = curSl(); removeItem(l, i); save(); renderEditor(); break; }
     case 'toggle-link': { const l = curSl(); l.links[i] = (l.links[i] || 'cambio') === 'segue' ? 'cambio' : 'segue'; save(); renderEditor(); break; }
     case 'open-picker': openPicker(); break;
-    case 'close-picker': if (el.id === 'picker' || el.tagName === 'BUTTON') $('#picker').classList.remove('on'); break;
     case 'add-song': addToSet(id); break;
     case 'copy-set': copySet(); break;
     case 'spin': spin(); break;
@@ -543,6 +584,14 @@ document.addEventListener('input', e => {
 $('#s-title').addEventListener('keydown', e => { if (e.key === 'Enter') $('#s-dur').focus(); });
 $('#s-dur').addEventListener('keydown', e => { if (e.key === 'Enter') saveSong(); });
 window.addEventListener('resize', () => { if ($('#tab-wheel').classList.contains('on')) drawWheel(); });
+
+window.handleBack = function () {
+  const m = document.querySelector('.sheet-bg.on');
+  if (m) { m.classList.remove('on'); if (m.id === 'song-modal') editingSong = null; return true; }
+  if (editingSl) { editingSl = null; renderSetlists(); return true; }
+  if (!$('#tab-songs').classList.contains('on')) { showTab('songs'); return true; }
+  return false;
+};
 
 renderSongs();
 </script>

@@ -81,6 +81,13 @@ public class MainActivity extends Activity {
     }
 
     @Override
+    public void onBackPressed() {
+        web.evaluateJavascript("(window.handleBack ? window.handleBack() : false)", v -> {
+            if (!"true".equals(v)) MainActivity.super.onBackPressed();
+        });
+    }
+
+    @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQ_FILE && fileCb != null) {
