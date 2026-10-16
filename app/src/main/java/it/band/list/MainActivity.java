@@ -147,6 +147,16 @@ public class MainActivity extends Activity {
         }
 
         void space(float s) { y += s; }
+
+        void rule(float width, float thickness, int color) {
+            if (!dry && page == null) newPage();
+            if (!dry) {
+                Paint lp = new Paint(Paint.ANTI_ALIAS_FLAG);
+                lp.setColor(color);
+                lp.setStrokeWidth(thickness);
+                c.drawLine(W / 2f - width / 2f, y, W / 2f + width / 2f, y, lp);
+            }
+        }
     }
 
     private static Paint mkPaint(float size, boolean bold, boolean italic, int color) {
@@ -162,18 +172,21 @@ public class MainActivity extends Activity {
     private static void renderSetlist(PdfWriter w, JSONObject o, float sz, float extra) throws Exception {
         JSONArray items = o.getJSONArray("items");
         JSONArray between = o.getJSONArray("between");
-        Paint title = mkPaint(Math.min(40f, sz * 1.15f), true, false, Color.BLACK);
+        Paint title = mkPaint(Math.min(44f, sz * 1.3f), true, false, Color.BLACK);
+        title.setLetterSpacing(0.12f);
         Paint date = mkPaint(Math.max(11f, sz * 0.5f), false, false, Color.DKGRAY);
         Paint song = mkPaint(sz, true, false, Color.BLACK);
         Paint small = mkPaint(Math.max(10f, sz * 0.5f), false, true, Color.GRAY);
 
-        w.text(o.getString("title"), title, 2);
+        w.text(o.getString("title").toUpperCase(java.util.Locale.ITALIAN), title, 4);
         String d = o.optString("date", "");
         if (d.length() > 0) w.text(d, date, 0);
-        w.space(sz * 0.9f);
+        w.space(sz * 0.8f);
+        w.rule(120f, 1.5f, Color.GRAY);
+        w.space(sz * 1.5f);
 
         for (int i = 0; i < items.length(); i++) {
-            w.text((i + 1) + ".  " + items.getString(i), song, 3);
+            w.text(items.getString(i), song, 3);
             if (i < between.length()) {
                 JSONObject b = between.getJSONObject(i);
                 String note = b.optString("note", "").trim();
