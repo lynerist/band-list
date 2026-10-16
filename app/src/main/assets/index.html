@@ -68,9 +68,8 @@ canvas{width:100%;aspect-ratio:1;display:block}
 
 <!-- REPERTORIO -->
 <section class="tab on" id="tab-songs">
-  <div class="hdr"><h1>🎸 Repertorio</h1><button class="ico" data-act="open-settings" aria-label="Impostazioni">⚙️</button></div>
+  <div class="hdr"><h1>Repertorio</h1><button class="ico" data-act="open-settings" aria-label="Impostazioni">⚙️</button></div>
 
-  <input type="search" id="s-search" placeholder="Cerca…">
   <div class="chips">
     <button class="chip on" data-act="filter" data-f="all">Tutti</button>
     <button class="chip" data-act="filter" data-f="own">Nostri</button>
@@ -85,7 +84,7 @@ canvas{width:100%;aspect-ratio:1;display:block}
 <!-- SCALETTE -->
 <section class="tab" id="tab-sets">
   <div id="sl-list-view">
-    <div class="hdr"><h1>📋 Scalette</h1><button class="pri" data-act="new-set">+ Nuova</button></div>
+    <div class="hdr"><h1>Scalette</h1><button class="pri" data-act="new-set">+ Nuova</button></div>
     <div id="sl-list"></div>
   </div>
   <div id="sl-edit-view" style="display:none">
@@ -112,7 +111,7 @@ canvas{width:100%;aspect-ratio:1;display:block}
 
 <!-- RUOTA -->
 <section class="tab" id="tab-wheel">
-  <h1>🎡 Ruota</h1>
+  <h1>Ruota</h1>
   <div class="wheelwrap"><canvas id="wheel"></canvas></div>
   <div class="result" id="result"></div>
   <div class="btns" style="margin-top:10px">
@@ -249,7 +248,6 @@ function renderSongs() {
       <div class="grow" data-act="edit-song" data-id="${s.id}" style="cursor:pointer"><div class="t">${esc(s.title)}${s.own ? '<span class="badge">nostro</span>' : ''}</div>
       <div class="sub">${fmt(s.dur)}</div></div>
       <button class="ico" data-act="edit-song" data-id="${s.id}">✎</button>
-      <button class="ico dng" data-act="del-song" data-id="${s.id}">🗑</button>
     </div>`).join('') : '<p class="empty">Nessun brano</p>';
 }
 function openSongModal(id) {
@@ -577,7 +575,6 @@ document.addEventListener('change', e => {
 });
 document.addEventListener('input', e => {
   const el = e.target;
-  if (el.id === 's-search') { q = el.value.trim().toLowerCase(); renderSongs(); }
   if (el.id === 'p-search') renderPicker();
   if (el.id === 'sl-name') { const l = curSl(); if (l) { l.name = el.value; save(); $('#sl-edit-view h1').textContent = l.name || 'Scaletta'; } }
 });
