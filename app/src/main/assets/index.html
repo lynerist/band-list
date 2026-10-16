@@ -152,6 +152,16 @@ canvas{width:100%;aspect-ratio:1;display:block}
   </div>
 </div>
 
+<!-- RESULT MODAL -->
+<div class="sheet-bg" id="result-modal" data-act="close-modal" style="align-items:center">
+  <div class="sheet" style="border-radius:18px;margin:0 auto;width:calc(100% - 28px);max-height:none;text-align:center">
+    <div class="sub">È uscito</div>
+    <div class="big" id="rm-title" style="margin:8px 0;overflow-wrap:anywhere;font-size:28px"></div>
+    <div class="sub" id="rm-sub" style="margin-bottom:14px"></div>
+    <button class="pri" data-act="close-modal" style="width:100%;padding:14px;font-size:18px">OK</button>
+  </div>
+</div>
+
 <!-- SETTINGS -->
 <div class="sheet-bg" id="settings" data-act="close-modal">
   <div class="sheet">
@@ -411,7 +421,11 @@ function addToSet(id) {
 }
 
 /* ---------- Ruota ---------- */
-let rot = 0, spinning = false;
+let rot = 0, spinning = false, pending = null;
+function commitPending() {
+  if (!pending) return;
+  S.wheel.extracted.push(pending.id); pending = null; save(); renderWheel();
+}
 const activeSongs = () => S.songs.filter(s => !S.wheel.excluded.includes(s.id) && !S.wheel.extracted.includes(s.id));
 function renderWheel() {
   const act = activeSongs();
@@ -447,10 +461,12 @@ function drawWheel(hl) {
   }
   const step = Math.PI * 2 / n;
   for (let i = 0; i < n; i++) {
+    const isW = pending && pending.idx === i;
+    ctx.globalAlpha = (pending && !isW) ? 0.4 : 1;
     const a0 = rot + i * step - Math.PI / 2, a1 = a0 + step;
     ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, R, a0, a1); ctx.closePath();
     ctx.fillStyle = `hsl(${(i * 137.5) % 360},55%,${act[i].own ? 42 : 36}%)`; ctx.fill();
-    ctx.strokeStyle = '#0b1220'; ctx.lineWidth = n > 1 ? 2 : 0; ctx.stroke();
+    ctx.strokeStyle = isW ? '#ffffff' : '#0b1220'; ctx.lineWidth = isW ? 4 : (n > 1 ? 2 : 0); ctx.stroke();
     ctx.save(); ctx.translate(cx, cy); ctx.rotate(a0 + step / 2);
     const fs = Math.max(9, Math.min(16, step * R * 0.55));
     ctx.font = `600 ${fs}px system-ui`; ctx.fillStyle = '#fff'; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
@@ -458,6 +474,7 @@ function drawWheel(hl) {
     while (label.length > 1 && ctx.measureText(label).width > maxW) label = label.slice(0, -2) + '…';
     ctx.fillText(label, R - 12, 0); ctx.restore();
   }
+  ctx.globalAlpha = 1;
   ctx.beginPath(); ctx.arc(cx, cy, 18, 0, Math.PI * 2); ctx.fillStyle = '#0b1220'; ctx.fill();
   ctx.strokeStyle = '#5cc8ff'; ctx.lineWidth = 3; ctx.stroke();
   drawPointer(ctx, cx, size);
@@ -484,11 +501,12 @@ function spin() {
     rot = start + delta * e; drawWheel();
     if (t < 1) return requestAnimationFrame(frame);
     spinning = false; rot = rot % TAU;
-    S.wheel.extracted.push(winner.id); save();
-    const r = $('#result'); r.style.display = 'block';
-    r.innerHTML = `${esc(winner.title)}<small>${durTxt(winner.dur)}${winner.own ? ' · nostro' : ''}</small>`;
+    pending = { id: winner.id, idx: w };
+    $('#rm-title').textContent = winner.title;
+    $('#rm-sub').textContent = durTxt(winner.dur) + (winner.own ? ' · nostro' : '');
     if (navigator.vibrate) navigator.vibrate(200);
     renderWheel();
+    $('#result-modal').classList.add('on');
   })(t0);
 }
 
@@ -537,6 +555,7 @@ document.addEventListener('click', e => {
       const m = el.closest('.sheet-bg');
       m.classList.remove('on');
       if (m.id === 'song-modal') editingSong = null;
+      if (m.id === 'result-modal') commitPending();
       break;
     }
     case 'del-song': delSong(id); break;
@@ -590,7 +609,12 @@ window.addEventListener('resize', () => { if ($('#tab-wheel').classList.contains
 document.addEventListener('mousedown', e => { if (e.target.closest('.stepper button')) e.preventDefault(); });
 window.handleBack = function () {
   const m = document.querySelector('.sheet-bg.on');
-  if (m) { m.classList.remove('on'); if (m.id === 'song-modal') editingSong = null; return true; }
+  if (m) {
+    m.classList.remove('on');
+    if (m.id === 'song-modal') editingSong = null;
+    if (m.id === 'result-modal') commitPending();
+    return true;
+  }
   if (editingSl) { editingSl = null; renderSetlists(); return true; }
   if (!$('#tab-songs').classList.contains('on')) { showTab('songs'); return true; }
   return false;
