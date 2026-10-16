@@ -113,7 +113,7 @@ button.mini{padding:7px 0;min-width:34px;width:34px;font-size:14px}
       <input type="date" id="sl-date">
     </div>
     <div class="card total">
-      <div><div class="sub">Durata scaletta · +15s per cambio</div><div class="big" id="sl-total">0:00</div></div>
+      <div><div class="sub">Durata scaletta · +20s cambio, +5s concatenati</div><div class="big" id="sl-total">0:00</div></div>
       <div class="sub" id="sl-info" style="text-align:right"></div>
     </div>
     <div class="card" id="sl-items"></div>
@@ -343,10 +343,10 @@ function delSong(id) {
 let editingSl = null, viewingSl = null, editBack = 'list', draft = null, draftSnap = '';
 const todayStr = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
 const fmtDate = d => d ? new Date(d + 'T12:00:00').toLocaleDateString('it-IT', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' }) : 'senza data';
-const CHANGE_SECS = 15;
+const CHANGE_SECS = 20, CHAIN_SECS = 5;
 const slDur = l => {
   let t = l.items.reduce((a, id) => a + (songById(id)?.dur || 0), 0);
-  for (let i = 0; i < l.items.length - 1; i++) if ((l.links[i] || 'cambio') !== 'segue') t += CHANGE_SECS;
+  for (let i = 0; i < l.items.length - 1; i++) t += (l.links[i] || 'cambio') === 'segue' ? CHAIN_SECS : CHANGE_SECS;
   return t;
 };
 const noteOf = (l, i) => (l.notes && l.notes[i]) || '';
