@@ -62,6 +62,8 @@ canvas{width:100%;aspect-ratio:1;display:block}
 .stepper input{flex:1;min-width:0;text-align:center;font-size:24px;font-weight:700;margin:0}
 .sheet-bg.on .sheet{animation:up .2s ease}
 @keyframes up{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+#song-modal{align-items:flex-start}
+#song-modal .sheet{border-radius:18px;margin-top:12px;max-height:none}
 </style>
 </head>
 <body>
@@ -584,6 +586,8 @@ $('#s-title').addEventListener('keydown', e => { if (e.key === 'Enter') $('#s-du
 $('#s-dur').addEventListener('keydown', e => { if (e.key === 'Enter') saveSong(); });
 window.addEventListener('resize', () => { if ($('#tab-wheel').classList.contains('on')) drawWheel(); });
 
+// i pulsanti +/-15s non devono rubare il focus: la tastiera resta aperta e il layout non si sposta
+document.addEventListener('mousedown', e => { if (e.target.closest('.stepper button')) e.preventDefault(); });
 window.handleBack = function () {
   const m = document.querySelector('.sheet-bg.on');
   if (m) { m.classList.remove('on'); if (m.id === 'song-modal') editingSong = null; return true; }
