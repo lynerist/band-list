@@ -62,7 +62,13 @@ canvas{width:100%;aspect-ratio:1;display:block}
 .stepper input{flex:1;min-width:0;text-align:center;font-size:24px;font-weight:700;margin:0}
 .sheet-bg.on .sheet{animation:up .2s ease}
 @keyframes up{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
-.note{width:calc(100% - 32px);margin:0 0 6px 32px;padding:8px 10px;font-size:14px}
+.between{margin:2px 0 8px 32px;display:flex;flex-direction:column;gap:6px}
+.between .link{width:100%;margin:0}
+input[type=text].note{width:100%;margin:0;padding:9px 10px;font-size:14px}
+button.mini{padding:7px 0;min-width:34px;width:34px;font-size:14px}
+.row.edit{gap:6px;align-items:flex-start}
+.row.edit .num{padding-top:2px}
+.badge{white-space:nowrap;overflow-wrap:normal;display:inline-block}
 .vlink{margin:2px 0 2px 32px;padding:6px 10px;font-size:13px;border-radius:8px;border:1px dashed var(--warn);color:var(--warn)}
 .vlink.segue{border:1px solid var(--acc2);color:var(--acc2)}
 .vlink b{color:var(--txt)}
@@ -372,17 +378,19 @@ function renderEditor() {
   $('#sl-info').innerHTML = `${l.items.length} brani<br>${l.links.length - seg} cambi · ${seg} concatenati`;
   $('#sl-items').innerHTML = l.items.length ? l.items.map((id, i) => {
     const s = songById(id);
-    const row = `<div class="row">
+    const row = `<div class="row edit">
       <div class="num">${i + 1}</div>
       <div class="grow"><div class="t">${esc(s?.title || '?')}${s?.own ? '<span class="badge">nostro</span>' : ''}</div><div class="sub">${durTxt(s?.dur)}</div></div>
-      <button class="ico" data-act="up" data-i="${i}" ${i === 0 ? 'disabled' : ''}>▲</button>
-      <button class="ico" data-act="down" data-i="${i}" ${i === l.items.length - 1 ? 'disabled' : ''}>▼</button>
-      <button class="ico dng" data-act="rm" data-i="${i}">✕</button>
+      <button class="ico mini" data-act="up" data-i="${i}" ${i === 0 ? 'disabled' : ''}>▲</button>
+      <button class="ico mini" data-act="down" data-i="${i}" ${i === l.items.length - 1 ? 'disabled' : ''}>▼</button>
+      <button class="ico mini dng" data-act="rm" data-i="${i}">✕</button>
     </div>`;
     if (i < l.items.length - 1) {
       const t = l.links[i] || 'cambio';
-      return row + `<button class="link ${t}" data-act="toggle-link" data-i="${i}">${t === 'segue' ? '⤵ Concatenati (attacco diretto)' : '⏸ Cambio (tocca per concatenare)'}</button>
-        <input type="text" class="note" data-note="${i}" value="${esc(noteOf(l, i))}" placeholder="Cosa si fa fra i due pezzi (es. discorso ambientalismo)" autocomplete="off">`;
+      return row + `<div class="between">
+        <button class="link ${t}" data-act="toggle-link" data-i="${i}">${t === 'segue' ? '⤵ Concatenati (attacco diretto)' : '⏸ Cambio · tocca per concatenare'}</button>
+        <input type="text" class="note" data-note="${i}" value="${esc(noteOf(l, i))}" placeholder="Nota fra i due pezzi (es. discorso)" autocomplete="off">
+      </div>`;
     }
     return row;
   }).join('') : '<p class="empty">Scaletta vuota</p>';
