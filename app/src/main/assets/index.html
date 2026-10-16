@@ -136,10 +136,10 @@ canvas{width:100%;aspect-ratio:1;display:block}
   <div class="sheet">
     <div class="hdr"><h1 id="sm-head">Nuovo brano</h1><button class="ico" data-act="close-modal">✕</button></div>
     <input type="text" id="s-title" placeholder="Titolo del brano" autocomplete="off">
-    <div class="sub" style="margin:2px 2px 6px">Durata (m:ss)</div>
+    <div class="sub" style="margin:2px 2px 6px">Durata (m:ss) · può restare vuota</div>
     <div class="stepper">
       <button data-act="dur-minus">−15s</button>
-      <input type="text" id="s-dur" value="3:00" autocomplete="off">
+      <input type="text" id="s-dur" value="3:00" placeholder="—" autocomplete="off">
       <button data-act="dur-plus">+15s</button>
     </div>
     <label class="chk"><input type="checkbox" id="s-own"> Pezzo nostro (inedito)</label>
@@ -223,6 +223,7 @@ function parseDur(str) {
   }
   return NaN;
 }
+const durTxt = d => d ? fmt(d) : '—';
 const songById = id => S.songs.find(s => s.id === id);
 const sortSongs = arr => arr.slice().sort((a, b) => a.title.localeCompare(b.title, 'it'));
 
@@ -246,7 +247,7 @@ function renderSongs() {
   $('#song-list').innerHTML = list.length ? list.map(s => `
     <div class="row">
       <div class="grow" data-act="edit-song" data-id="${s.id}" style="cursor:pointer"><div class="t">${esc(s.title)}${s.own ? '<span class="badge">nostro</span>' : ''}</div>
-      <div class="sub">${fmt(s.dur)}</div></div>
+      <div class="sub">${durTxt(s.dur)}</div></div>
       <button class="ico" data-act="edit-song" data-id="${s.id}">✎</button>
     </div>`).join('') : '<p class="empty">Nessun brano</p>';
 }
@@ -255,7 +256,7 @@ function openSongModal(id) {
   editingSong = s ? s.id : null;
   $('#sm-head').textContent = s ? 'Modifica brano' : 'Nuovo brano';
   $('#s-title').value = s ? s.title : '';
-  $('#s-dur').value = fmt(s ? s.dur : 180);
+  $('#s-dur').value = s ? (s.dur ? fmt(s.dur) : '') : '3:00';
   $('#s-own').checked = s ? !!s.own : false;
   $('#sm-del').style.display = s ? '' : 'none';
   $('#song-modal').classList.add('on');
@@ -272,7 +273,7 @@ function saveSong() {
   const title = $('#s-title').value.trim();
   const dur = parseDur($('#s-dur').value);
   if (!title) return toast('Inserisci il titolo');
-  if (isNaN(dur) || dur <= 0) return toast('Durata non valida (usa es. 3:45)');
+  if (isNaN(dur) || dur < 0) return toast('Durata non valida (usa es. 3:45)');
   const own = $('#s-own').checked;
   if (editingSong) {
     const s = songById(editingSong);
@@ -335,7 +336,7 @@ function renderEditor() {
     const s = songById(id);
     const row = `<div class="row">
       <div class="num">${i + 1}</div>
-      <div class="grow"><div class="t">${esc(s?.title || '?')}${s?.own ? '<span class="badge">nostro</span>' : ''}</div><div class="sub">${fmt(s?.dur)}</div></div>
+      <div class="grow"><div class="t">${esc(s?.title || '?')}${s?.own ? '<span class="badge">nostro</span>' : ''}</div><div class="sub">${durTxt(s?.dur)}</div></div>
       <button class="ico" data-act="up" data-i="${i}" ${i === 0 ? 'disabled' : ''}>▲</button>
       <button class="ico" data-act="down" data-i="${i}" ${i === l.items.length - 1 ? 'disabled' : ''}>▼</button>
       <button class="ico dng" data-act="rm" data-i="${i}">✕</button>
@@ -372,7 +373,7 @@ function setText(l) {
   const lines = [`${l.name || 'Scaletta'} - ${fmtDate(l.date)}`, `Durata: ${fmt(slDur(l))}`, ''];
   l.items.forEach((id, i) => {
     const s = songById(id);
-    lines.push(`${i + 1}. ${s?.title || '?'} (${fmt(s?.dur)})${s?.own ? ' [nostro]' : ''}`);
+    lines.push(`${i + 1}. ${s?.title || '?'} (${durTxt(s?.dur)})${s?.own ? ' [nostro]' : ''}`);
     if (i < l.items.length - 1) lines.push((l.links[i] || 'cambio') === 'segue' ? '   ↓ attacco diretto' : '   — cambio');
   });
   return lines.join('\n');
@@ -396,7 +397,7 @@ function renderPicker() {
   $('#p-list').innerHTML = list.length ? list.map(s => {
     const n = l.items.filter(x => x === s.id).length;
     return `<div class="row" data-act="add-song" data-id="${s.id}" style="cursor:pointer${n ? ';opacity:.5' : ''}">
-      <div class="grow"><div class="t">${esc(s.title)}${s.own ? '<span class="badge">nostro</span>' : ''}</div><div class="sub">${fmt(s.dur)}</div></div>
+      <div class="grow"><div class="t">${esc(s.title)}${s.own ? '<span class="badge">nostro</span>' : ''}</div><div class="sub">${durTxt(s.dur)}</div></div>
       <button class="ico">${n ? '✓' : '+'}</button></div>`;
   }).join('') : '<p class="empty">Nessun brano nel repertorio</p>';
 }
@@ -417,7 +418,7 @@ function renderWheel() {
   const ex = S.wheel.extracted.map(songById).filter(Boolean);
   $('#extracted').innerHTML = ex.length ? ex.map((s, i) => `
     <div class="row"><div class="num">${i + 1}</div>
-    <div class="grow"><div class="t">${esc(s.title)}</div><div class="sub">${fmt(s.dur)}</div></div>
+    <div class="grow"><div class="t">${esc(s.title)}</div><div class="sub">${durTxt(s.dur)}</div></div>
     <button class="ico" data-act="putback" data-id="${s.id}" title="Rimetti in ruota">↩</button></div>`).join('')
     : '<p class="empty">Nessun brano estratto</p>';
   $('#wheel-songs').innerHTML = S.songs.length ? sortSongs(S.songs).map(s => {
@@ -483,7 +484,7 @@ function spin() {
     spinning = false; rot = rot % TAU;
     S.wheel.extracted.push(winner.id); save();
     const r = $('#result'); r.style.display = 'block';
-    r.innerHTML = `${esc(winner.title)}<small>${fmt(winner.dur)}${winner.own ? ' · nostro' : ''}</small>`;
+    r.innerHTML = `${esc(winner.title)}<small>${durTxt(winner.dur)}${winner.own ? ' · nostro' : ''}</small>`;
     if (navigator.vibrate) navigator.vibrate(200);
     renderWheel();
   })(t0);
