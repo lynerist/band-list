@@ -69,6 +69,7 @@ button.mini{padding:7px 0;min-width:34px;width:34px;font-size:14px}
 .row.edit{gap:6px;align-items:flex-start}
 .row.edit .num{padding-top:2px}
 .badge{white-space:nowrap;overflow-wrap:normal;display:inline-block}
+.t.own{color:var(--ok)}
 .vlink{margin:2px 0 2px 32px;padding:6px 10px;font-size:13px;border-radius:8px;border:1px dashed var(--warn);color:var(--warn)}
 .vlink.segue{border:1px solid var(--acc2);color:var(--acc2)}
 .vlink b{color:var(--txt)}
@@ -380,7 +381,7 @@ function renderEditor() {
     const s = songById(id);
     const row = `<div class="row edit">
       <div class="num">${i + 1}</div>
-      <div class="grow"><div class="t">${esc(s?.title || '?')}${s?.own ? '<span class="badge">nostro</span>' : ''}</div><div class="sub">${durTxt(s?.dur)}</div></div>
+      <div class="grow"><div class="t${s?.own ? ' own' : ''}">${esc(s?.title || '?')}</div><div class="sub">${durTxt(s?.dur)}</div></div>
       <button class="ico mini" data-act="up" data-i="${i}" ${i === 0 ? 'disabled' : ''}>▲</button>
       <button class="ico mini" data-act="down" data-i="${i}" ${i === l.items.length - 1 ? 'disabled' : ''}>▼</button>
       <button class="ico mini dng" data-act="rm" data-i="${i}">✕</button>
@@ -407,7 +408,7 @@ function renderViewer() {
     const s = songById(id);
     const row = `<div class="row">
       <div class="num">${i + 1}</div>
-      <div class="grow"><div class="t">${esc(s?.title || '?')}${s?.own ? '<span class="badge">nostro</span>' : ''}</div><div class="sub">${durTxt(s?.dur)}</div></div>
+      <div class="grow"><div class="t${s?.own ? ' own' : ''}">${esc(s?.title || '?')}</div><div class="sub">${durTxt(s?.dur)}</div></div>
     </div>`;
     if (i < l.items.length - 1) {
       const t = l.links[i] || 'cambio', n = noteOf(l, i);
@@ -468,7 +469,7 @@ function renderPicker() {
   $('#p-list').innerHTML = list.length ? list.map(s => {
     const n = l.items.filter(x => x === s.id).length;
     return `<div class="row" data-act="add-song" data-id="${s.id}" style="cursor:pointer${n ? ';opacity:.5' : ''}">
-      <div class="grow"><div class="t">${esc(s.title)}${s.own ? '<span class="badge">nostro</span>' : ''}</div><div class="sub">${durTxt(s.dur)}</div></div>
+      <div class="grow"><div class="t${s.own ? ' own' : ''}">${esc(s.title)}</div><div class="sub">${durTxt(s.dur)}</div></div>
       <button class="ico">${n ? '✓' : '+'}</button></div>`;
   }).join('') : '<p class="empty">Nessun brano nel repertorio</p>';
 }
