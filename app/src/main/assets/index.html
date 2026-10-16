@@ -62,6 +62,10 @@ canvas{width:100%;aspect-ratio:1;display:block}
 .stepper input{flex:1;min-width:0;text-align:center;font-size:24px;font-weight:700;margin:0}
 .sheet-bg.on .sheet{animation:up .2s ease}
 @keyframes up{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+.note{width:calc(100% - 32px);margin:0 0 6px 32px;padding:8px 10px;font-size:14px}
+.vlink{margin:2px 0 2px 32px;padding:6px 10px;font-size:13px;border-radius:8px;border:1px dashed var(--warn);color:var(--warn)}
+.vlink.segue{border:1px solid var(--acc2);color:var(--acc2)}
+.vlink b{color:var(--txt)}
 #song-modal{align-items:flex-start}
 #song-modal .sheet{border-radius:18px;margin-top:12px;max-height:none}
 </style>
@@ -106,6 +110,21 @@ canvas{width:100%;aspect-ratio:1;display:block}
     <div class="card" id="sl-items"></div>
     <div class="btns">
       <button class="pri" data-act="open-picker">+ Aggiungi brani</button>
+      <button data-act="copy-set">📋 Copia testo</button>
+    </div>
+  </div>
+  <div id="sl-view" style="display:none">
+    <div class="hdr">
+      <button data-act="back-sets">← Indietro</button>
+      <h1 id="sv-title"></h1>
+      <button class="pri" data-act="edit-set">✎ Modifica</button>
+    </div>
+    <div class="card total">
+      <div><div class="sub" id="sv-date"></div><div class="big" id="sv-total">0:00</div></div>
+      <div class="sub" id="sv-info" style="text-align:right"></div>
+    </div>
+    <div class="card" id="sv-items"></div>
+    <div class="btns">
       <button data-act="copy-set">📋 Copia testo</button>
     </div>
   </div>
@@ -311,23 +330,30 @@ function delSong(id) {
 }
 
 /* ---------- Scalette ---------- */
-let editingSl = null;
+let editingSl = null, viewingSl = null;
 const todayStr = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
 const fmtDate = d => d ? new Date(d + 'T12:00:00').toLocaleDateString('it-IT', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' }) : 'senza data';
 const slDur = l => l.items.reduce((a, id) => a + (songById(id)?.dur || 0), 0);
+const noteOf = (l, i) => (l.notes && l.notes[i]) || '';
 function removeItem(l, i) {
   l.items.splice(i, 1);
-  if (l.links.length) l.links.splice(Math.min(i, l.links.length - 1), 1);
+  if (l.links.length) {
+    const k = Math.min(i, l.links.length - 1);
+    l.links.splice(k, 1);
+    if (l.notes) l.notes.splice(k, 1);
+  }
 }
 function renderSetlists() {
-  const edit = !!editingSl;
-  $('#sl-list-view').style.display = edit ? 'none' : '';
+  const edit = !!editingSl, view = !edit && !!viewingSl;
+  $('#sl-list-view').style.display = (edit || view) ? 'none' : '';
   $('#sl-edit-view').style.display = edit ? '' : 'none';
+  $('#sl-view').style.display = view ? '' : 'none';
   if (edit) return renderEditor();
+  if (view) return renderViewer();
   const sorted = S.setlists.slice().sort((a, b) => (b.date || '').localeCompare(a.date || ''));
   $('#sl-list').innerHTML = sorted.length ? sorted.map(l => `
     <div class="card row" style="border-bottom:1px solid var(--bd)">
-      <div class="grow" data-act="open-set" data-id="${l.id}" style="cursor:pointer">
+      <div class="grow" data-act="view-set" data-id="${l.id}" style="cursor:pointer">
         <div class="t">${esc(l.name || 'Scaletta')}</div>
         <div class="sub">${fmtDate(l.date)} · ${l.items.length} brani · ${fmt(slDur(l))}</div>
       </div>
@@ -355,25 +381,47 @@ function renderEditor() {
     </div>`;
     if (i < l.items.length - 1) {
       const t = l.links[i] || 'cambio';
-      return row + `<button class="link ${t}" data-act="toggle-link" data-i="${i}">${t === 'segue' ? '⤵ Concatenati (attacco diretto)' : '⏸ Cambio (tocca per concatenare)'}</button>`;
+      return row + `<button class="link ${t}" data-act="toggle-link" data-i="${i}">${t === 'segue' ? '⤵ Concatenati (attacco diretto)' : '⏸ Cambio (tocca per concatenare)'}</button>
+        <input type="text" class="note" data-note="${i}" value="${esc(noteOf(l, i))}" placeholder="Cosa si fa fra i due pezzi (es. discorso ambientalismo)" autocomplete="off">`;
     }
     return row;
   }).join('') : '<p class="empty">Scaletta vuota</p>';
 }
-function curSl() { return S.setlists.find(x => x.id === editingSl); }
+function renderViewer() {
+  const l = S.setlists.find(x => x.id === viewingSl);
+  if (!l) { viewingSl = null; return renderSetlists(); }
+  $('#sv-title').textContent = l.name || 'Scaletta';
+  $('#sv-date').textContent = fmtDate(l.date);
+  $('#sv-total').textContent = fmt(slDur(l));
+  const seg = l.links.filter(x => x === 'segue').length;
+  $('#sv-info').innerHTML = `${l.items.length} brani<br>${l.links.length - seg} cambi · ${seg} concatenati`;
+  $('#sv-items').innerHTML = l.items.length ? l.items.map((id, i) => {
+    const s = songById(id);
+    const row = `<div class="row">
+      <div class="num">${i + 1}</div>
+      <div class="grow"><div class="t">${esc(s?.title || '?')}${s?.own ? '<span class="badge">nostro</span>' : ''}</div><div class="sub">${durTxt(s?.dur)}</div></div>
+    </div>`;
+    if (i < l.items.length - 1) {
+      const t = l.links[i] || 'cambio', n = noteOf(l, i);
+      return row + `<div class="vlink ${t}">${t === 'segue' ? '⤵ attacco diretto' : '⏸ cambio'}${n ? ` · <b>${esc(n)}</b>` : ''}</div>`;
+    }
+    return row;
+  }).join('') : '<p class="empty">Scaletta vuota</p>';
+}
+function curSl() { return S.setlists.find(x => x.id === (editingSl || viewingSl)); }
 function newSet() {
-  const l = { id: uid(), name: '', date: todayStr(), items: [], links: [] };
+  const l = { id: uid(), name: '', date: todayStr(), items: [], links: [], notes: [] };
   S.setlists.push(l); save(); editingSl = l.id; renderSetlists();
 }
 function dupSet(id) {
   const l = S.setlists.find(x => x.id === id); if (!l) return;
-  S.setlists.push({ id: uid(), name: (l.name || 'Scaletta') + ' (copia)', date: todayStr(), items: l.items.slice(), links: l.links.slice() });
+  S.setlists.push({ id: uid(), name: (l.name || 'Scaletta') + ' (copia)', date: todayStr(), items: l.items.slice(), links: l.links.slice(), notes: (l.notes || []).slice() });
   save(); renderSetlists(); toast('Scaletta duplicata');
 }
 function delSet() {
   const l = curSl(); if (!l) return;
   if (!confirm(`Eliminare la scaletta "${l.name || 'Scaletta'}"?`)) return;
-  S.setlists = S.setlists.filter(x => x.id !== l.id); editingSl = null; save(); renderSetlists();
+  S.setlists = S.setlists.filter(x => x.id !== l.id); editingSl = null; viewingSl = null; save(); renderSetlists();
 }
 function move(i, d) {
   const l = curSl(), j = i + d;
@@ -386,7 +434,10 @@ function setText(l) {
   l.items.forEach((id, i) => {
     const s = songById(id);
     lines.push(`${i + 1}. ${s?.title || '?'} (${durTxt(s?.dur)})${s?.own ? ' [nostro]' : ''}`);
-    if (i < l.items.length - 1) lines.push((l.links[i] || 'cambio') === 'segue' ? '   ↓ attacco diretto' : '   — cambio');
+    if (i < l.items.length - 1) {
+      const n = noteOf(l, i);
+      lines.push(((l.links[i] || 'cambio') === 'segue' ? '   ↓ attacco diretto' : '   — cambio') + (n ? ': ' + n : ''));
+    }
   });
   return lines.join('\n');
 }
@@ -416,7 +467,7 @@ function renderPicker() {
 function addToSet(id) {
   const l = curSl(); if (!l) return;
   if (l.items.includes(id)) return toast('Brano già in scaletta');
-  if (l.items.length) l.links.push('cambio');
+  if (l.items.length) { l.links.push('cambio'); (l.notes = l.notes || [])[l.links.length - 1] = ''; }
   l.items.push(id); save(); renderPicker(); renderEditor();
 }
 
@@ -566,9 +617,13 @@ document.addEventListener('click', e => {
     case 'export': exportData(); break;
     case 'import': $('#file-in').click(); break;
     case 'new-set': newSet(); break;
-    case 'open-set': editingSl = id; renderSetlists(); window.scrollTo(0, 0); break;
+    case 'view-set': viewingSl = id; renderSetlists(); window.scrollTo(0, 0); break;
+    case 'open-set': editingSl = id; viewingSl = null; renderSetlists(); window.scrollTo(0, 0); break;
+    case 'edit-set': editingSl = viewingSl; viewingSl = null; renderSetlists(); window.scrollTo(0, 0); break;
     case 'dup-set': dupSet(id); break;
-    case 'back-sets': editingSl = null; renderSetlists(); break;
+    case 'back-sets':
+      if (editingSl) { viewingSl = editingSl; editingSl = null; } else viewingSl = null;
+      renderSetlists(); window.scrollTo(0, 0); break;
     case 'del-set': delSet(); break;
     case 'up': move(i, -1); break;
     case 'down': move(i, 1); break;
@@ -599,6 +654,10 @@ document.addEventListener('change', e => {
 document.addEventListener('input', e => {
   const el = e.target;
   if (el.id === 'p-search') renderPicker();
+  if (el.dataset.note !== undefined) {
+    const l = curSl();
+    if (l) { l.notes = l.notes || []; l.notes[+el.dataset.note] = el.value; save(); }
+  }
   if (el.id === 'sl-name') { const l = curSl(); if (l) { l.name = el.value; save(); $('#sl-edit-view h1').textContent = l.name || 'Scaletta'; } }
 });
 $('#s-title').addEventListener('keydown', e => { if (e.key === 'Enter') $('#s-dur').focus(); });
@@ -615,7 +674,8 @@ window.handleBack = function () {
     if (m.id === 'result-modal') commitPending();
     return true;
   }
-  if (editingSl) { editingSl = null; renderSetlists(); return true; }
+  if (editingSl) { viewingSl = editingSl; editingSl = null; renderSetlists(); return true; }
+  if (viewingSl && $('#tab-sets').classList.contains('on')) { viewingSl = null; renderSetlists(); return true; }
   if (!$('#tab-songs').classList.contains('on')) { showTab('songs'); return true; }
   return false;
 };
