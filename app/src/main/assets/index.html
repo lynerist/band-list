@@ -466,7 +466,7 @@ function setText(l) {
   const lines = [`${l.name || 'Scaletta'} - ${fmtDate(l.date)}`, `Durata: ${fmt(slDur(l))}`, ''];
   l.items.forEach((id, i) => {
     const s = songById(id);
-    lines.push(`${i + 1}. ${s?.title || '?'} (${durTxt(s?.dur)})${s?.own ? ' [nostro]' : ''}`);
+    lines.push(`${i + 1}. ${s?.title || '?'} (${durTxt(s?.dur)})`);
     if (i < l.items.length - 1) {
       const n = noteOf(l, i);
       lines.push(((l.links[i] || 'cambio') === 'segue' ? '   ↓ attacco diretto' : '   — cambio') + (n ? ': ' + n : ''));
