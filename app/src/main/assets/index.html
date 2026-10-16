@@ -134,6 +134,7 @@ button.mini{padding:7px 0;min-width:34px;width:34px;font-size:14px}
     </div>
     <div class="card" id="sv-items"></div>
     <div class="btns">
+      <button class="pri" data-act="export-pdf">📄 Esporta PDF</button>
       <button data-act="copy-set">📋 Copia testo</button>
     </div>
   </div>
@@ -486,6 +487,22 @@ function setText(l) {
   });
   return lines.join('\n');
 }
+function exportPdf() {
+  const l = curSl(); if (!l) return;
+  if (!l.items.length) return toast('Scaletta vuota');
+  if (!window.AndroidBridge || !AndroidBridge.savePdf) return toast('Esportazione PDF disponibile solo nell\'app');
+  const data = {
+    title: l.name || 'Scaletta',
+    date: l.date ? fmtDate(l.date) : '',
+    items: l.items.map(id => songById(id)?.title || '?'),
+    between: l.items.slice(0, -1).map((_, i) => {
+      const sg = (l.links[i] || 'cambio') === 'segue';
+      return { segue: sg, note: sg ? '' : noteOf(l, i) };
+    })
+  };
+  const fname = ((l.name || 'Scaletta') + (l.date ? '-' + l.date : '')).replace(/[^\w\-]+/g, '_') + '.pdf';
+  toast(AndroidBridge.savePdf(fname, JSON.stringify(data)) === 'ok' ? 'PDF salvato in Download' : 'Errore nel creare il PDF');
+}
 async function copySet() {
   const l = curSl(); if (!l) return;
   const text = setText(l);
@@ -688,6 +705,7 @@ document.addEventListener('click', e => {
     case 'open-picker': openPicker(); break;
     case 'add-song': addToSet(id); break;
     case 'copy-set': copySet(); break;
+    case 'export-pdf': exportPdf(); break;
     case 'spin': spin(); break;
     case 'reset-wheel':
       if (spinning) break;
