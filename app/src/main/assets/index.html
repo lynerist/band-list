@@ -1,12 +1,14 @@
 <!doctype html>
-<html lang="it">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0b1220">
-<title>Repertorio</title>
+<title>Band setlist manager</title>
+<script>try{var __d=JSON.parse(localStorage.getItem("repertorio_gruppo_v1"));if(__d&&__d.settings&&__d.settings.theme==="light")document.documentElement.setAttribute("data-theme","light");}catch(e){}</script>
 <style>
-:root{--bg:#0b1220;--card:#131c2f;--card2:#1a2540;--txt:#e8eefc;--mut:#8fa0c4;--acc:#5cc8ff;--acc2:#8b7bff;--ok:#43d6a0;--warn:#ffb454;--bad:#ff6b7a;--bd:#243253}
+:root{color-scheme:dark;--bg:#0b1220;--card:#131c2f;--card2:#1a2540;--txt:#e8eefc;--mut:#8fa0c4;--acc:#5cc8ff;--acc2:#8b7bff;--ok:#43d6a0;--warn:#ffb454;--bad:#ff6b7a;--bd:#243253;--own:#ffffff;--cover:#5cc8ff;--pri-txt:#04101f;--navbg:#0e1626;--toast-bg:#ffffff;--toast-txt:#000000;--shadow:rgba(0,0,0,.5)}
+:root[data-theme=light]{color-scheme:light;--bg:#f3f6fb;--card:#ffffff;--card2:#e9eef8;--txt:#16223b;--mut:#5d6c8a;--acc:#1d8fd6;--acc2:#6a5bd8;--ok:#14a37a;--warn:#c97800;--bad:#d6334d;--bd:#d2dbec;--own:#111827;--cover:#1d8fd6;--pri-txt:#ffffff;--navbg:#ffffff;--toast-bg:#16223b;--toast-txt:#ffffff;--shadow:rgba(30,50,90,.28)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;font-size:16px}
 body{padding:14px 14px 96px;max-width:640px;margin:0 auto}
@@ -18,7 +20,7 @@ label.chk{display:flex;align-items:center;gap:10px;padding:6px 2px;font-size:15p
 input[type=checkbox]{width:22px;height:22px;accent-color:var(--acc)}
 button{font:inherit;color:var(--txt);background:var(--card2);border:1px solid var(--bd);border-radius:10px;padding:10px 14px;cursor:pointer}
 button:active{transform:scale(.97)}
-button.pri{background:linear-gradient(135deg,var(--acc),var(--acc2));color:#04101f;border:0;font-weight:700}
+button.pri{background:linear-gradient(135deg,var(--acc),var(--acc2));color:var(--pri-txt);border:0;font-weight:700}
 button.dng{color:var(--bad)}
 button:disabled{opacity:.4}
 button.ico{padding:8px 11px;min-width:40px}
@@ -30,11 +32,11 @@ button.ico{padding:8px 11px;min-width:40px}
 .badge{font-size:11px;background:var(--ok);color:#04251a;border-radius:20px;padding:2px 8px;margin-left:6px;font-weight:700;vertical-align:middle}
 .chips{display:flex;gap:8px;margin-bottom:8px}
 .chip{flex:1;text-align:center;padding:8px;border-radius:20px;font-size:14px}
-.chip.on{background:var(--acc);color:#04101f;border-color:var(--acc);font-weight:700}
+.chip.on{background:var(--acc);color:var(--pri-txt);border-color:var(--acc);font-weight:700}
 .btns{display:flex;gap:8px;flex-wrap:wrap}
 .btns>button{flex:1}
 .empty{color:var(--mut);text-align:center;padding:16px 0;margin:0}
-nav{position:fixed;left:0;right:0;bottom:0;background:#0e1626;border-top:1px solid var(--bd);display:flex;padding:6px 6px calc(6px + env(safe-area-inset-bottom));z-index:10}
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--navbg);border-top:1px solid var(--bd);display:flex;padding:6px 6px calc(6px + env(safe-area-inset-bottom));z-index:10}
 nav button{flex:1;background:none;border:0;color:var(--mut);padding:8px 4px;font-size:13px;border-radius:10px}
 nav button b{display:block;font-size:20px;font-weight:400}
 nav button.on{color:var(--acc);background:var(--card2)}
@@ -53,10 +55,10 @@ canvas{width:100%;aspect-ratio:1;display:block}
 .sheet-bg.on{display:flex}
 .sheet{background:var(--bg);width:100%;max-width:640px;margin:0 auto;border-radius:18px 18px 0 0;padding:14px 14px calc(14px + env(safe-area-inset-bottom));max-height:80vh;display:flex;flex-direction:column;border:1px solid var(--bd)}
 .sheet .scroll{overflow:auto;flex:1}
-.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#fff;color:#000;padding:10px 16px;border-radius:20px;font-size:14px;z-index:30;display:none;max-width:90%}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--toast-bg);color:var(--toast-txt);padding:10px 16px;border-radius:20px;font-size:14px;z-index:30;display:none;max-width:90%}
 .hdr{display:flex;align-items:center;gap:8px;margin-bottom:10px}
 .hdr h1{margin:0;flex:1}
-.fab{position:fixed;right:18px;bottom:calc(78px + env(safe-area-inset-bottom));width:58px;height:58px;border-radius:50%;padding:0;font-size:32px;line-height:1;background:linear-gradient(135deg,var(--acc),var(--acc2));color:#04101f;border:0;font-weight:700;box-shadow:0 6px 18px rgba(0,0,0,.5);z-index:9}
+.fab{position:fixed;right:18px;bottom:calc(78px + env(safe-area-inset-bottom));width:58px;height:58px;border-radius:50%;padding:0;font-size:32px;line-height:1;background:linear-gradient(135deg,var(--acc),var(--acc2));color:var(--pri-txt);border:0;font-weight:700;box-shadow:0 6px 18px var(--shadow);z-index:9}
 .stepper{display:flex;gap:8px;align-items:center;margin-bottom:10px}
 .stepper button{min-width:68px;height:52px;padding:0 8px;font-size:16px;font-weight:700}
 .stepper input{flex:1;min-width:0;text-align:center;font-size:24px;font-weight:700;margin:0}
@@ -69,64 +71,72 @@ button.mini{padding:7px 0;min-width:34px;width:34px;font-size:14px}
 .row.edit{gap:6px;align-items:flex-start}
 .row.edit .num{padding-top:2px}
 .badge{white-space:nowrap;overflow-wrap:normal;display:inline-block}
-.t.own{color:#fff}
-.t.cover{color:var(--acc)}
+.t.own{color:var(--own)}
+.t.cover{color:var(--cover)}
 #song-list{margin-bottom:76px}
 .vlink{margin:2px 0 2px 32px;padding:6px 10px;font-size:13px;border-radius:8px;border:1px dashed var(--warn);color:var(--warn)}
 .vlink.segue{border:1px solid var(--acc2);color:var(--acc2)}
 .vlink b{color:var(--txt)}
 #song-modal{align-items:flex-start}
-#song-modal .sheet{border-radius:18px;margin-top:12px;max-height:none}
+#song-modal .sheet{border-radius:18px;margin-top:12px;max-height:calc(100vh - 24px);overflow:auto}
+textarea{width:100%;background:var(--card2);border:1px solid var(--bd);border-radius:10px;color:var(--txt);padding:11px 12px;font-size:16px;font-family:inherit;resize:vertical;margin-bottom:8px}
+.fullview{position:fixed;inset:0;background:var(--bg);z-index:12;overflow:auto;padding:14px 14px 40px;display:none}
+.fullview.on{display:block}
+.fullview>*{max-width:640px;margin-left:auto;margin-right:auto}
+.lyrics{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.5;font-size:16px}
+.kv{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid var(--bd)}
+.kv:last-child{border-bottom:0}
+.kv span:last-child{text-align:right;overflow-wrap:anywhere}
 </style>
 </head>
 <body>
 
 <!-- REPERTORIO -->
 <section class="tab on" id="tab-songs">
-  <div class="hdr"><h1>Repertorio</h1><button class="ico" data-act="open-settings" aria-label="Impostazioni">⚙️</button></div>
+  <div class="hdr"><h1>Repertoire</h1><button class="ico" data-act="open-settings" aria-label="Settings">⚙️</button></div>
 
   <div class="chips">
-    <button class="chip on" data-act="filter" data-f="all">Tutti</button>
-    <button class="chip" data-act="filter" data-f="own">Nostri</button>
-    <button class="chip" data-act="filter" data-f="cover">Cover</button>
+    <button class="chip on" data-act="filter" data-f="all">All</button>
+    <button class="chip" data-act="filter" data-f="own">Originals</button>
+    <button class="chip" data-act="filter" data-f="cover">Covers</button>
   </div>
   <div class="sub" id="song-stats" style="margin:0 0 6px 4px"></div>
   <div class="card" id="song-list"></div>
 
-  <button class="fab" data-act="new-song" aria-label="Nuovo brano">+</button>
+  <button class="fab" data-act="new-song" aria-label="New song">+</button>
 </section>
 
 <!-- SCALETTE -->
 <section class="tab" id="tab-sets">
   <div id="sl-list-view">
-    <div class="hdr"><h1>Scalette</h1><button class="pri" data-act="new-set">+ Nuova</button></div>
+    <div class="hdr"><h1>Setlists</h1><button class="pri" data-act="new-set">+ New</button></div>
     <div id="sl-list"></div>
   </div>
   <div id="sl-edit-view" style="display:none">
     <div class="hdr">
-      <button data-act="back-sets">← Indietro</button>
+      <button data-act="back-sets">← Back</button>
       <h1></h1>
       <button class="dng" data-act="del-set">🗑</button>
     </div>
     <div class="card">
-      <input type="text" id="sl-name" placeholder="Nome (es. Locale X)">
+      <input type="text" id="sl-name" placeholder="Name (e.g. Venue X)">
       <input type="date" id="sl-date">
     </div>
     <div class="card total">
-      <div><div class="sub">Durata scaletta · +20s cambio, +5s concatenati</div><div class="big" id="sl-total">0:00</div></div>
+      <div><div class="sub">Setlist length · +20s per change, +5s per chain</div><div class="big" id="sl-total">0:00</div></div>
       <div class="sub" id="sl-info" style="text-align:right"></div>
     </div>
     <div class="card" id="sl-items"></div>
     <div class="btns">
-      <button data-act="open-picker">+ Aggiungi brani</button>
-      <button class="pri" data-act="save-set">✓ Salva</button>
+      <button data-act="open-picker">+ Add songs</button>
+      <button class="pri" data-act="save-set">✓ Save</button>
     </div>
   </div>
   <div id="sl-view" style="display:none">
     <div class="hdr">
-      <button data-act="back-sets">← Indietro</button>
+      <button data-act="back-sets">← Back</button>
       <h1 id="sv-title"></h1>
-      <button class="pri" data-act="edit-set">✎ Modifica</button>
+      <button class="pri" data-act="edit-set">✎ Edit</button>
     </div>
     <div class="card total">
       <div><div class="sub" id="sv-date"></div><div class="big" id="sv-total">0:00</div></div>
@@ -134,53 +144,74 @@ button.mini{padding:7px 0;min-width:34px;width:34px;font-size:14px}
     </div>
     <div class="card" id="sv-items"></div>
     <div class="btns">
-      <button class="pri" data-act="export-pdf">📄 Esporta PDF</button>
-      <button data-act="copy-set">📋 Copia testo</button>
+      <button class="pri" data-act="export-pdf">📄 Export PDF</button>
+      <button data-act="copy-set">📋 Copy text</button>
     </div>
   </div>
 </section>
 
 <!-- RUOTA -->
 <section class="tab" id="tab-wheel">
-  <h1>Ruota</h1>
+  <h1>Wheel</h1>
   <div class="wheelwrap"><canvas id="wheel"></canvas></div>
   <div class="result" id="result"></div>
   <div class="btns" style="margin-top:10px">
-    <button class="pri" id="spin-btn" data-act="spin" style="font-size:18px;padding:14px">GIRA!</button>
+    <button class="pri" id="spin-btn" data-act="spin" style="font-size:18px;padding:14px">SPIN!</button>
   </div>
   <div class="sub" id="wheel-info" style="text-align:center;margin:8px 0"></div>
   <div class="btns" style="margin-bottom:6px">
-    <button data-act="only-cover" style="color:var(--acc);font-weight:700">Solo cover</button>
-    <button data-act="only-own" style="color:#fff;font-weight:700">Solo nostri</button>
+    <button data-act="only-cover" style="color:var(--acc);font-weight:700">Covers only</button>
+    <button data-act="only-own" style="color:var(--own);font-weight:700">Originals only</button>
   </div>
 
-  <h2>Estratti</h2>
+  <h2>Drawn</h2>
   <div class="card" id="extracted"></div>
   <div class="btns">
-    <button class="dng" data-act="reset-wheel">↺ Reset estratti</button>
-    <button data-act="include-all">Includi tutti</button>
+    <button class="dng" data-act="reset-wheel">↺ Reset drawn</button>
+    <button data-act="include-all">Include all</button>
   </div>
 
-  <h2>Brani in ruota</h2>
-  <p class="sub" style="margin-top:0">Togli la spunta per escludere un brano.</p>
+  <h2>Songs on the wheel</h2>
+  <p class="sub" style="margin-top:0">Untick a song to exclude it.</p>
   <div class="card" id="wheel-songs"></div>
 </section>
+
+<!-- SONG VIEW -->
+<div class="fullview" id="song-view">
+  <div class="hdr">
+    <button data-act="close-song-view">← Back</button>
+    <h1 id="sd-title" style="overflow-wrap:anywhere"></h1>
+    <button class="pri" data-act="edit-song-from-view">✎ Edit</button>
+  </div>
+  <div class="card" id="sd-meta"></div>
+  <h2>Lyrics</h2>
+  <div class="card">
+    <div class="lyrics" id="sd-lyrics"></div>
+    <p class="empty" id="sd-empty" style="display:none">No lyrics yet.<br><br><button class="pri" data-act="edit-song-from-view">+ Add lyrics</button></p>
+  </div>
+  <div class="btns">
+    <button data-act="copy-lyrics">📋 Copy lyrics</button>
+    <button class="pri" data-act="pdf-lyrics">📄 Export PDF</button>
+  </div>
+</div>
 
 <!-- SONG MODAL -->
 <div class="sheet-bg" id="song-modal" data-act="close-modal">
   <div class="sheet">
-    <div class="hdr"><h1 id="sm-head">Nuovo brano</h1><button class="ico" data-act="close-modal">✕</button></div>
-    <input type="text" id="s-title" placeholder="Titolo del brano" autocomplete="off">
-    <div class="sub" style="margin:2px 2px 6px">Durata (m:ss) · può restare vuota</div>
+    <div class="hdr"><h1 id="sm-head">New song</h1><button class="ico" data-act="close-modal">✕</button></div>
+    <input type="text" id="s-title" placeholder="Song title" autocomplete="off">
+    <div class="sub" style="margin:2px 2px 6px">Duration (m:ss) · can be left empty</div>
     <div class="stepper">
       <button data-act="dur-minus">−15s</button>
       <input type="text" id="s-dur" value="3:00" placeholder="—" autocomplete="off">
       <button data-act="dur-plus">+15s</button>
     </div>
-    <label class="chk"><input type="checkbox" id="s-own"> Pezzo nostro (inedito)</label>
+    <label class="chk"><input type="checkbox" id="s-own"> Original song (ours)</label>
+    <div class="sub" style="margin:8px 2px 6px">Lyrics (optional)</div>
+    <textarea id="s-lyrics" rows="7" placeholder="Paste or type the lyrics…"></textarea>
     <div class="btns" style="margin-top:8px">
-      <button class="dng" id="sm-del" data-act="del-song-modal" style="display:none">🗑 Elimina</button>
-      <button class="pri" data-act="save-song">Salva</button>
+      <button class="dng" id="sm-del" data-act="del-song-modal" style="display:none">🗑 Delete</button>
+      <button class="pri" data-act="save-song">Save</button>
     </div>
   </div>
 </div>
@@ -188,7 +219,7 @@ button.mini{padding:7px 0;min-width:34px;width:34px;font-size:14px}
 <!-- RESULT MODAL -->
 <div class="sheet-bg" id="result-modal" data-act="close-modal" style="align-items:center">
   <div class="sheet" style="border-radius:18px;margin:0 auto;width:calc(100% - 28px);max-height:none;text-align:center">
-    <div class="sub">È uscito</div>
+    <div class="sub">You drew</div>
     <div class="big" id="rm-title" style="margin:8px 0;overflow-wrap:anywhere;font-size:28px"></div>
     <div class="sub" id="rm-sub" style="margin-bottom:14px"></div>
     <button class="pri" data-act="close-modal" style="width:100%;padding:14px;font-size:18px">OK</button>
@@ -198,13 +229,18 @@ button.mini{padding:7px 0;min-width:34px;width:34px;font-size:14px}
 <!-- SETTINGS -->
 <div class="sheet-bg" id="settings" data-act="close-modal">
   <div class="sheet">
-    <div class="hdr"><h1>⚙️ Impostazioni</h1><button class="ico" data-act="close-modal">✕</button></div>
-    <h2 style="margin-top:4px">Backup</h2>
+    <div class="hdr"><h1>⚙️ Settings</h1><button class="ico" data-act="close-modal">✕</button></div>
+    <h2 style="margin-top:4px">Appearance</h2>
+    <div class="chips">
+      <button class="chip" data-act="set-theme" data-theme="dark">🌙 Dark</button>
+      <button class="chip" data-act="set-theme" data-theme="light">☀️ Light</button>
+    </div>
+    <h2>Backup</h2>
     <div class="card">
-      <p class="sub" style="margin-top:0">I dati restano nel telefono. L'export salva un file JSON nella cartella Download.</p>
+      <p class="sub" style="margin-top:0">Your data is stored on this device. Export saves a JSON file to the Downloads folder.</p>
       <div class="btns">
-        <button data-act="export">⬇ Esporta</button>
-        <button data-act="import">⬆ Importa</button>
+        <button data-act="export">⬇ Export</button>
+        <button data-act="import">⬆ Import</button>
       </div>
       <input type="file" id="file-in" accept=".json,application/json" style="display:none">
     </div>
@@ -214,8 +250,8 @@ button.mini{padding:7px 0;min-width:34px;width:34px;font-size:14px}
 <!-- PICKER -->
 <div class="sheet-bg" id="picker" data-act="close-modal">
   <div class="sheet">
-    <div class="hdr"><h1>Aggiungi brani</h1><button class="pri" data-act="close-modal">Fatto</button></div>
-    <input type="search" id="p-search" placeholder="Cerca…">
+    <div class="hdr"><h1>Add songs</h1><button class="pri" data-act="close-modal">Done</button></div>
+    <input type="search" id="p-search" placeholder="Search…">
     <div class="scroll" id="p-list"></div>
   </div>
 </div>
@@ -223,9 +259,9 @@ button.mini{padding:7px 0;min-width:34px;width:34px;font-size:14px}
 <div class="toast" id="toast"></div>
 
 <nav>
-  <button class="on" data-tab="songs"><b>🎸</b>Repertorio</button>
-  <button data-tab="sets"><b>📋</b>Scalette</button>
-  <button data-tab="wheel"><b>🎡</b>Ruota</button>
+  <button class="on" data-tab="songs"><b>🎸</b>Repertoire</button>
+  <button data-tab="sets"><b>📋</b>Setlists</button>
+  <button data-tab="wheel"><b>🎡</b>Wheel</button>
 </nav>
 
 <script>
@@ -234,20 +270,29 @@ const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 
-function defaults() { return { songs: [], setlists: [], wheel: { excluded: [], extracted: [] } }; }
+function defaults() { return { songs: [], setlists: [], wheel: { excluded: [], extracted: [] }, settings: { theme: 'dark' } }; }
 function load() {
   try {
     const r = JSON.parse(localStorage.getItem(KEY));
     if (r && Array.isArray(r.songs)) {
       const d = Object.assign(defaults(), r);
       d.wheel = Object.assign({ excluded: [], extracted: [] }, d.wheel);
+      d.settings = Object.assign({ theme: 'dark' }, d.settings);
       return d;
     }
   } catch (e) {}
   return defaults();
 }
 let S = load();
-function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { toast('Impossibile salvare i dati'); } }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { toast('Could not save data'); } }
+function applyTheme() {
+  const th = S.settings && S.settings.theme === 'light' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', th);
+  const m = document.querySelector('meta[name=theme-color]'); if (m) m.content = th === 'light' ? '#f3f6fb' : '#0b1220';
+  try { if (window.AndroidBridge && AndroidBridge.setTheme) AndroidBridge.setTheme(th); } catch (e) {}
+  document.querySelectorAll('[data-act=set-theme]').forEach(b => b.classList.toggle('on', b.dataset.theme === th));
+}
+applyTheme();
 
 function toast(msg) {
   const t = $('#toast'); t.textContent = msg; t.style.display = 'block';
@@ -270,7 +315,7 @@ function parseDur(str) {
 }
 const durTxt = d => d ? fmt(d) : '—';
 const songById = id => S.songs.find(s => s.id === id);
-const sortSongs = arr => arr.slice().sort((a, b) => a.title.localeCompare(b.title, 'it'));
+const sortSongs = arr => arr.slice().sort((a, b) => a.title.localeCompare(b.title));
 
 /* ---------- Tabs ---------- */
 function showTab(name) {
@@ -282,27 +327,43 @@ function showTab(name) {
   window.scrollTo(0, 0);
 }
 
-/* ---------- Repertorio ---------- */
-let filter = 'all', q = '', editingSong = null;
+/* ---------- Repertoire ---------- */
+let filter = 'all', q = '', editingSong = null, viewingSong = null;
 function renderSongs() {
   const list = sortSongs(S.songs.filter(s =>
     (filter === 'all' || (filter === 'own' ? s.own : !s.own)) && s.title.toLowerCase().includes(q)));
   const tot = S.songs.reduce((a, s) => a + s.dur, 0);
-  $('#song-stats').textContent = `${S.songs.length} brani (${S.songs.filter(s => s.own).length} nostri) · ${fmt(tot)}`;
+  $('#song-stats').textContent = `${S.songs.length} songs (${S.songs.filter(s => s.own).length} originals) · ${fmt(tot)}`;
   $('#song-list').innerHTML = list.length ? list.map(s => `
     <div class="row">
-      <div class="grow" data-act="edit-song" data-id="${s.id}" style="cursor:pointer"><div class="t ${s.own ? 'own' : 'cover'}">${esc(s.title)}</div>
+      <div class="grow" data-act="open-song" data-id="${s.id}" style="cursor:pointer"><div class="t ${s.own ? 'own' : 'cover'}">${esc(s.title)}</div>
       <div class="sub">${durTxt(s.dur)}</div></div>
       <button class="ico" data-act="edit-song" data-id="${s.id}">✎</button>
-    </div>`).join('') : '<p class="empty">Nessun brano</p>';
+    </div>`).join('') : '<p class="empty">No songs</p>';
+}
+function openSongView(id) { viewingSong = id; renderSongView(); const v = $('#song-view'); v.classList.add('on'); v.scrollTop = 0; }
+function closeSongView() { viewingSong = null; $('#song-view').classList.remove('on'); }
+function renderSongView() {
+  const s = songById(viewingSong);
+  if (!s) return closeSongView();
+  const kv = (k, v) => `<div class="kv"><span class="sub">${k}</span><span>${v}</span></div>`;
+  const used = S.setlists.filter(l => l.items.includes(s.id)).map(l => esc(l.name || 'Setlist'));
+  $('#sd-title').textContent = s.title;
+  $('#sd-title').className = s.own ? 'own' : 'cover';
+  $('#sd-meta').innerHTML = kv('Type', s.own ? 'Original (our song)' : 'Cover') + kv('Duration', durTxt(s.dur)) + kv('In setlists', used.length ? used.join(', ') : 'None');
+  const has = !!(s.lyrics && s.lyrics.trim());
+  $('#sd-lyrics').textContent = has ? s.lyrics : '';
+  $('#sd-lyrics').style.display = has ? '' : 'none';
+  $('#sd-empty').style.display = has ? 'none' : '';
 }
 function openSongModal(id) {
   const s = id ? songById(id) : null;
   editingSong = s ? s.id : null;
-  $('#sm-head').textContent = s ? 'Modifica brano' : 'Nuovo brano';
+  $('#sm-head').textContent = s ? 'Edit song' : 'New song';
   $('#s-title').value = s ? s.title : '';
   $('#s-dur').value = s ? (s.dur ? fmt(s.dur) : '') : '3:00';
   $('#s-own').checked = s ? !!s.own : false;
+  $('#s-lyrics').value = s ? (s.lyrics || '') : '';
   $('#sm-del').style.display = s ? '' : 'none';
   $('#song-modal').classList.add('on');
   if (!s) setTimeout(() => $('#s-title').focus(), 80);
@@ -317,21 +378,22 @@ function adjustDur(d) {
 function saveSong() {
   const title = $('#s-title').value.trim();
   const dur = parseDur($('#s-dur').value);
-  if (!title) return toast('Inserisci il titolo');
-  if (isNaN(dur) || dur < 0) return toast('Durata non valida (usa es. 3:45)');
+  if (!title) return toast('Enter a title');
+  if (isNaN(dur) || dur < 0) return toast('Invalid duration (e.g. 3:45)');
   const own = $('#s-own').checked;
+  const lyrics = $('#s-lyrics').value.replace(/\s+$/, '');
   if (editingSong) {
     const s = songById(editingSong);
-    if (s) { s.title = title; s.dur = dur; s.own = own; }
+    if (s) { s.title = title; s.dur = dur; s.own = own; s.lyrics = lyrics; }
   } else {
-    S.songs.push({ id: uid(), title, dur, own });
+    S.songs.push({ id: uid(), title, dur, own, lyrics });
   }
-  save(); closeSongModal(); renderSongs();
+  save(); closeSongModal(); renderSongs(); if (viewingSong) renderSongView();
 }
 function delSong(id) {
   const s = songById(id); if (!s) return;
   const used = S.setlists.filter(l => l.items.includes(id)).length;
-  const msg = `Eliminare "${s.title}"?` + (used ? `\nVerrà tolto anche da ${used} scalett${used === 1 ? 'a' : 'e'}.` : '');
+  const msg = `Delete "${s.title}"?` + (used ? `\nIt will also be removed from ${used} setlist${used === 1 ? '' : 's'}.` : '');
   if (!confirm(msg)) return;
   S.songs = S.songs.filter(x => x.id !== id);
   S.setlists.forEach(l => {
@@ -340,13 +402,14 @@ function delSong(id) {
   S.wheel.excluded = S.wheel.excluded.filter(x => x !== id);
   S.wheel.extracted = S.wheel.extracted.filter(x => x !== id);
   if (editingSong === id) resetSongForm();
+  if (viewingSong === id) closeSongView();
   save(); renderSongs();
 }
 
-/* ---------- Scalette ---------- */
+/* ---------- Setlists ---------- */
 let editingSl = null, viewingSl = null, editBack = 'list', draft = null, draftSnap = '';
 const todayStr = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
-const fmtDate = d => d ? new Date(d + 'T12:00:00').toLocaleDateString('it-IT', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' }) : 'senza data';
+const fmtDate = d => d ? new Date(d + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' }) : 'no date';
 const CHANGE_SECS = 20, CHAIN_SECS = 5;
 const slDur = l => {
   let t = l.items.reduce((a, id) => a + (songById(id)?.dur || 0), 0);
@@ -373,22 +436,22 @@ function renderSetlists() {
   $('#sl-list').innerHTML = sorted.length ? sorted.map(l => `
     <div class="card row" style="border-bottom:1px solid var(--bd)">
       <div class="grow" data-act="view-set" data-id="${l.id}" style="cursor:pointer">
-        <div class="t">${esc(l.name || 'Scaletta')}</div>
-        <div class="sub">${fmtDate(l.date)} · ${l.items.length} brani · ${fmt(slDur(l))}</div>
+        <div class="t">${esc(l.name || 'Setlist')}</div>
+        <div class="sub">${fmtDate(l.date)} · ${l.items.length} songs · ${fmt(slDur(l))}</div>
       </div>
-      <button class="ico" data-act="open-set" data-id="${l.id}" title="Modifica">✎</button>
-      <button class="ico" data-act="dup-set" data-id="${l.id}" title="Duplica">⧉</button>
-    </div>`).join('') : '<p class="empty">Nessuna scaletta. Creane una!</p>';
+      <button class="ico" data-act="open-set" data-id="${l.id}" title="Edit">✎</button>
+      <button class="ico" data-act="dup-set" data-id="${l.id}" title="Duplicate">⧉</button>
+    </div>`).join('') : '<p class="empty">No setlists yet. Create one!</p>';
 }
 function renderEditor() {
   const l = draft;
   if (!l) { editingSl = null; return renderSetlists(); }
-  $('#sl-edit-view h1').textContent = l.name || 'Scaletta';
+  $('#sl-edit-view h1').textContent = l.name || 'Setlist';
   if (document.activeElement !== $('#sl-name')) $('#sl-name').value = l.name || '';
   $('#sl-date').value = l.date || '';
   $('#sl-total').textContent = fmt(slDur(l));
   const seg = l.links.filter(x => x === 'segue').length;
-  $('#sl-info').innerHTML = `${l.items.length} brani<br>${l.links.length - seg} cambi · ${seg} concatenati`;
+  $('#sl-info').innerHTML = `${l.items.length} songs<br>${l.links.length - seg} changes · ${seg} chained`;
   $('#sl-items').innerHTML = l.items.length ? l.items.map((id, i) => {
     const s = songById(id);
     const row = `<div class="row edit">
@@ -401,21 +464,21 @@ function renderEditor() {
     if (i < l.items.length - 1) {
       const t = l.links[i] || 'cambio';
       return row + `<div class="between">
-        <button class="link ${t}" data-act="toggle-link" data-i="${i}">${t === 'segue' ? '⤵ Concatenati (attacco diretto)' : '⏸ Cambio · tocca per concatenare'}</button>
-        ${t === 'segue' ? '' : `<input type="text" class="note" data-note="${i}" value="${esc(noteOf(l, i))}" placeholder="Nota fra i due pezzi (es. discorso)" autocomplete="off">`}
+        <button class="link ${t}" data-act="toggle-link" data-i="${i}">${t === 'segue' ? '⤵ Chained (segue)' : '⏸ Change · tap to chain'}</button>
+        ${t === 'segue' ? '' : `<input type="text" class="note" data-note="${i}" value="${esc(noteOf(l, i))}" placeholder="Note between songs (e.g. speech)" autocomplete="off">`}
       </div>`;
     }
     return row;
-  }).join('') : '<p class="empty">Scaletta vuota</p>';
+  }).join('') : '<p class="empty">Empty setlist</p>';
 }
 function renderViewer() {
   const l = S.setlists.find(x => x.id === viewingSl);
   if (!l) { viewingSl = null; return renderSetlists(); }
-  $('#sv-title').textContent = l.name || 'Scaletta';
+  $('#sv-title').textContent = l.name || 'Setlist';
   $('#sv-date').textContent = fmtDate(l.date);
   $('#sv-total').textContent = fmt(slDur(l));
   const seg = l.links.filter(x => x === 'segue').length;
-  $('#sv-info').innerHTML = `${l.items.length} brani<br>${l.links.length - seg} cambi · ${seg} concatenati`;
+  $('#sv-info').innerHTML = `${l.items.length} songs<br>${l.links.length - seg} changes · ${seg} chained`;
   $('#sv-items').innerHTML = l.items.length ? l.items.map((id, i) => {
     const s = songById(id);
     const row = `<div class="row">
@@ -424,14 +487,14 @@ function renderViewer() {
     </div>`;
     if (i < l.items.length - 1) {
       const t = l.links[i] || 'cambio', n = t === 'segue' ? '' : noteOf(l, i);
-      return row + `<div class="vlink ${t}">${t === 'segue' ? '⤵ attacco diretto' : '⏸ cambio'}${n ? ` · <b>${esc(n)}</b>` : ''}</div>`;
+      return row + `<div class="vlink ${t}">${t === 'segue' ? '⤵ segue' : '⏸ change'}${n ? ` · <b>${esc(n)}</b>` : ''}</div>`;
     }
     return row;
-  }).join('') : '<p class="empty">Scaletta vuota</p>';
+  }).join('') : '<p class="empty">Empty setlist</p>';
 }
 function goSetsList() {
   if (editingSl) {
-    if (draft && JSON.stringify(draft) !== draftSnap && !confirm('Uscire senza salvare? Le modifiche andranno perse.')) return;
+    if (draft && JSON.stringify(draft) !== draftSnap && !confirm('Leave without saving? Your changes will be lost.')) return;
     editingSl = null; draft = null;
   }
   viewingSl = null;
@@ -442,7 +505,7 @@ function leaveEditor() {
   editingSl = null; draft = null; renderSetlists(); window.scrollTo(0, 0);
 }
 function tryLeaveEditor() {
-  if (draft && JSON.stringify(draft) !== draftSnap && !confirm('Uscire senza salvare? Le modifiche andranno perse.')) return;
+  if (draft && JSON.stringify(draft) !== draftSnap && !confirm('Leave without saving? Your changes will be lost.')) return;
   leaveEditor();
 }
 function startEdit(id, back) {
@@ -456,7 +519,7 @@ function commitDraft() {
   const copy = JSON.parse(JSON.stringify(draft));
   const i = S.setlists.findIndex(x => x.id === copy.id);
   if (i >= 0) S.setlists[i] = copy; else S.setlists.push(copy);
-  save(); toast('Scaletta salvata'); leaveEditor();
+  save(); toast('Setlist saved'); leaveEditor();
 }
 function curSl() { return editingSl ? draft : S.setlists.find(x => x.id === viewingSl); }
 function newSet() {
@@ -465,12 +528,12 @@ function newSet() {
 }
 function dupSet(id) {
   const l = S.setlists.find(x => x.id === id); if (!l) return;
-  S.setlists.push({ id: uid(), name: (l.name || 'Scaletta') + ' (copia)', date: todayStr(), items: l.items.slice(), links: l.links.slice(), notes: (l.notes || []).slice() });
-  save(); renderSetlists(); toast('Scaletta duplicata');
+  S.setlists.push({ id: uid(), name: (l.name || 'Setlist') + ' (copy)', date: todayStr(), items: l.items.slice(), links: l.links.slice(), notes: (l.notes || []).slice() });
+  save(); renderSetlists(); toast('Setlist duplicated');
 }
 function delSet() {
   const l = curSl(); if (!l) return;
-  if (!confirm(`Eliminare la scaletta "${l.name || 'Scaletta'}"?`)) return;
+  if (!confirm(`Delete the setlist "${l.name || 'Setlist'}"?`)) return;
   S.setlists = S.setlists.filter(x => x.id !== l.id); editingSl = null; viewingSl = null; draft = null; save(); renderSetlists();
 }
 function move(i, d) {
@@ -480,23 +543,23 @@ function move(i, d) {
   save(); renderEditor();
 }
 function setText(l) {
-  const lines = [`${l.name || 'Scaletta'} - ${fmtDate(l.date)}`, `Durata: ${fmt(slDur(l))}`, ''];
+  const lines = [`${l.name || 'Setlist'} - ${fmtDate(l.date)}`, `Length: ${fmt(slDur(l))}`, ''];
   l.items.forEach((id, i) => {
     const s = songById(id);
     lines.push(`${i + 1}. ${s?.title || '?'} (${durTxt(s?.dur)})`);
     if (i < l.items.length - 1) {
       const sg = (l.links[i] || 'cambio') === 'segue', n = sg ? '' : noteOf(l, i);
-      lines.push((sg ? '   ↓ attacco diretto' : '   — cambio') + (n ? ': ' + n : ''));
+      lines.push((sg ? '   ↓ segue' : '   — change') + (n ? ': ' + n : ''));
     }
   });
   return lines.join('\n');
 }
 function exportPdf() {
   const l = curSl(); if (!l) return;
-  if (!l.items.length) return toast('Scaletta vuota');
-  if (!window.AndroidBridge || !AndroidBridge.savePdf) return toast('Esportazione PDF disponibile solo nell\'app');
+  if (!l.items.length) return toast('Empty setlist');
+  if (!window.AndroidBridge || !AndroidBridge.savePdf) return toast('PDF export is only available in the app');
   const data = {
-    title: l.name || 'Scaletta',
+    title: l.name || 'Setlist',
     date: l.date ? fmtDate(l.date) : '',
     items: l.items.map(id => songById(id)?.title || '?'),
     between: l.items.slice(0, -1).map((_, i) => {
@@ -504,18 +567,29 @@ function exportPdf() {
       return { segue: sg, note: sg ? '' : noteOf(l, i) };
     })
   };
-  const fname = ((l.name || 'Scaletta') + (l.date ? '-' + l.date : '')).replace(/[^\w\-]+/g, '_') + '.pdf';
-  toast(AndroidBridge.savePdf(fname, JSON.stringify(data)) === 'ok' ? 'PDF salvato in Download' : 'Errore nel creare il PDF');
+  const fname = ((l.name || 'Setlist') + (l.date ? '-' + l.date : '')).replace(/[^\w\-]+/g, '_') + '.pdf';
+  toast(AndroidBridge.savePdf(fname, JSON.stringify(data)) === 'ok' ? 'PDF saved to Downloads' : 'Could not create the PDF');
 }
-async function copySet() {
-  const l = curSl(); if (!l) return;
-  const text = setText(l);
-  try { await navigator.clipboard.writeText(text); toast('Copiata negli appunti'); }
+async function copyText(text, okMsg) {
+  try { await navigator.clipboard.writeText(text); toast(okMsg); }
   catch (e) {
     const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta);
-    ta.select(); try { document.execCommand('copy'); toast('Copiata negli appunti'); } catch (_) { toast('Copia non riuscita'); }
+    ta.select(); try { document.execCommand('copy'); toast(okMsg); } catch (_) { toast('Copy failed'); }
     ta.remove();
   }
+}
+function copySet() { const l = curSl(); if (l) copyText(setText(l), 'Copied to clipboard'); }
+function copyLyrics() {
+  const s = songById(viewingSong); if (!s) return;
+  if (!(s.lyrics || '').trim()) return toast('No lyrics yet');
+  copyText(s.lyrics, 'Lyrics copied');
+}
+function exportLyricsPdf() {
+  const s = songById(viewingSong); if (!s) return;
+  if (!(s.lyrics || '').trim()) return toast('No lyrics yet');
+  if (!window.AndroidBridge || !AndroidBridge.saveLyricsPdf) return toast('PDF export is only available in the app');
+  const fname = s.title.replace(/[^\w\-]+/g, '_') + '-lyrics.pdf';
+  toast(AndroidBridge.saveLyricsPdf(fname, JSON.stringify({ title: s.title, lyrics: s.lyrics })) === 'ok' ? 'PDF saved to Downloads' : 'Could not create the PDF');
 }
 /* picker */
 function openPicker() { $('#picker').classList.add('on'); $('#p-search').value = ''; renderPicker(); }
@@ -528,16 +602,16 @@ function renderPicker() {
     return `<div class="row" data-act="add-song" data-id="${s.id}" style="cursor:pointer${n ? ';opacity:.5' : ''}">
       <div class="grow"><div class="t ${s.own ? 'own' : 'cover'}">${esc(s.title)}</div><div class="sub">${durTxt(s.dur)}</div></div>
       <button class="ico">${n ? '✓' : '+'}</button></div>`;
-  }).join('') : '<p class="empty">Nessun brano nel repertorio</p>';
+  }).join('') : '<p class="empty">No songs in the repertoire</p>';
 }
 function addToSet(id) {
   const l = curSl(); if (!l) return;
-  if (l.items.includes(id)) return toast('Brano già in scaletta');
+  if (l.items.includes(id)) return toast('Song already in the setlist');
   if (l.items.length) { l.links.push('cambio'); (l.notes = l.notes || [])[l.links.length - 1] = ''; }
   l.items.push(id); save(); renderPicker(); renderEditor();
 }
 
-/* ---------- Ruota ---------- */
+/* ---------- Wheel ---------- */
 let rot = 0, spinning = false, pending = null;
 function commitPending() {
   if (!pending) return;
@@ -546,20 +620,20 @@ function commitPending() {
 const activeSongs = () => S.songs.filter(s => !S.wheel.excluded.includes(s.id) && !S.wheel.extracted.includes(s.id));
 function renderWheel() {
   const act = activeSongs();
-  $('#wheel-info').textContent = act.length ? `${act.length} brani in ruota` : 'Ruota vuota';
+  $('#wheel-info').textContent = act.length ? `${act.length} songs on the wheel` : 'The wheel is empty';
   $('#spin-btn').disabled = spinning || act.length === 0;
   const ex = S.wheel.extracted.map(songById).filter(Boolean);
   $('#extracted').innerHTML = ex.length ? ex.map((s, i) => `
     <div class="row"><div class="num">${i + 1}</div>
     <div class="grow"><div class="t">${esc(s.title)}</div><div class="sub">${durTxt(s.dur)}</div></div>
-    <button class="ico" data-act="putback" data-id="${s.id}" title="Rimetti in ruota">↩</button></div>`).join('')
-    : '<p class="empty">Nessun brano estratto</p>';
+    <button class="ico" data-act="putback" data-id="${s.id}" title="Put back on the wheel">↩</button></div>`).join('')
+    : '<p class="empty">Nothing drawn yet</p>';
   $('#wheel-songs').innerHTML = S.songs.length ? sortSongs(S.songs).map(s => {
     const out = S.wheel.extracted.includes(s.id);
     return `<label class="row chk" style="${out ? 'opacity:.5' : ''}">
       <input type="checkbox" data-act="toggle-excl" data-id="${s.id}" ${S.wheel.excluded.includes(s.id) ? '' : 'checked'}>
-      <span class="grow"><span class="t">${esc(s.title)}</span>${out ? ' <span class="sub">(estratto)</span>' : ''}</span></label>`;
-  }).join('') : '<p class="empty">Aggiungi brani al repertorio</p>';
+      <span class="grow"><span class="t">${esc(s.title)}</span>${out ? ' <span class="sub">(drawn)</span>' : ''}</span></label>`;
+  }).join('') : '<p class="empty">Add songs to the repertoire</p>';
   drawWheel();
 }
 function drawWheel(hl) {
@@ -568,13 +642,14 @@ function drawWheel(hl) {
   const ctx = c.getContext('2d');
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, size, size);
+  const css = getComputedStyle(document.documentElement), g = v => css.getPropertyValue(v).trim();
   const cx = size / 2, cy = size / 2, R = size / 2 - 14;
   const act = activeSongs(), n = act.length;
   if (!n) {
     ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2);
-    ctx.fillStyle = '#131c2f'; ctx.fill(); ctx.strokeStyle = '#243253'; ctx.lineWidth = 3; ctx.stroke();
-    ctx.fillStyle = '#8fa0c4'; ctx.font = '16px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Nessun brano in ruota', cx, cy); drawPointer(ctx, cx, size); return;
+    ctx.fillStyle = g('--card'); ctx.fill(); ctx.strokeStyle = g('--bd'); ctx.lineWidth = 3; ctx.stroke();
+    ctx.fillStyle = g('--mut'); ctx.font = '16px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('No songs on the wheel', cx, cy); drawPointer(ctx, cx, size); return;
   }
   const step = Math.PI * 2 / n;
   for (let i = 0; i < n; i++) {
@@ -583,7 +658,7 @@ function drawWheel(hl) {
     const a0 = rot + i * step - Math.PI / 2, a1 = a0 + step;
     ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, R, a0, a1); ctx.closePath();
     ctx.fillStyle = `hsl(${(i * 137.5) % 360},55%,${act[i].own ? 42 : 36}%)`; ctx.fill();
-    ctx.strokeStyle = isW ? '#ffffff' : '#0b1220'; ctx.lineWidth = isW ? 4 : (n > 1 ? 2 : 0); ctx.stroke();
+    ctx.strokeStyle = isW ? g('--own') : g('--bg'); ctx.lineWidth = isW ? 4 : (n > 1 ? 2 : 0); ctx.stroke();
     const mid = a0 + step / 2;
     ctx.save(); ctx.translate(cx, cy); ctx.rotate(mid);
     const fs = Math.max(9, Math.min(13, step * R * 0.4));
@@ -602,13 +677,14 @@ function drawWheel(hl) {
     ctx.fillText(label, tx, 0); ctx.restore();
   }
   ctx.globalAlpha = 1;
-  ctx.beginPath(); ctx.arc(cx, cy, 18, 0, Math.PI * 2); ctx.fillStyle = '#0b1220'; ctx.fill();
-  ctx.strokeStyle = '#5cc8ff'; ctx.lineWidth = 3; ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx, cy, 18, 0, Math.PI * 2); ctx.fillStyle = g('--bg'); ctx.fill();
+  ctx.strokeStyle = g('--acc'); ctx.lineWidth = 3; ctx.stroke();
   drawPointer(ctx, cx, size);
 }
 function drawPointer(ctx, cx) {
+  const css = getComputedStyle(document.documentElement);
   ctx.beginPath(); ctx.moveTo(cx - 13, 2); ctx.lineTo(cx + 13, 2); ctx.lineTo(cx, 30); ctx.closePath();
-  ctx.fillStyle = '#fff'; ctx.fill(); ctx.strokeStyle = '#0b1220'; ctx.lineWidth = 2; ctx.stroke();
+  ctx.fillStyle = css.getPropertyValue('--own').trim(); ctx.fill(); ctx.strokeStyle = css.getPropertyValue('--bg').trim(); ctx.lineWidth = 2; ctx.stroke();
 }
 function spin() {
   if (spinning) return;
@@ -630,7 +706,7 @@ function spin() {
     spinning = false; rot = rot % TAU;
     pending = { id: winner.id, idx: w };
     $('#rm-title').textContent = winner.title;
-    $('#rm-sub').textContent = durTxt(winner.dur) + (winner.own ? ' · nostro' : '');
+    $('#rm-sub').textContent = durTxt(winner.dur) + (winner.own ? ' · original' : '');
     if (navigator.vibrate) navigator.vibrate(200);
     renderWheel();
     $('#result-modal').classList.add('on');
@@ -639,9 +715,9 @@ function spin() {
 
 /* ---------- Backup ---------- */
 function exportData() {
-  const json = JSON.stringify(S, null, 2), fname = `repertorio-${todayStr()}.json`;
+  const json = JSON.stringify(S, null, 2), fname = `band-setlist-manager-${todayStr()}.json`;
   if (window.AndroidBridge) {
-    toast(AndroidBridge.saveFile(fname, json) === 'ok' ? 'Backup salvato in Download' : 'Errore nel salvataggio');
+    toast(AndroidBridge.saveFile(fname, json) === 'ok' ? 'Backup saved to Downloads' : 'Could not save the backup');
     return;
   }
   const blob = new Blob([json], { type: 'application/json' });
@@ -656,15 +732,16 @@ function importData(file) {
     try {
       const d = JSON.parse(rd.result);
       if (!d || !Array.isArray(d.songs) || !Array.isArray(d.setlists)) throw 0;
-      if (!confirm(`Importare ${d.songs.length} brani e ${d.setlists.length} scalette?\nI dati attuali verranno sostituiti.`)) return;
-      S = Object.assign(defaults(), d); S.wheel = Object.assign({ excluded: [], extracted: [] }, S.wheel);
-      save(); editingSl = null; viewingSl = null; draft = null; resetSongForm(); showTab('songs'); toast('Importato');
-    } catch (e) { toast('File non valido'); }
+      if (!confirm(`Import ${d.songs.length} songs and ${d.setlists.length} setlists?\nYour current data will be replaced.`)) return;
+      const keepSettings = S.settings;
+      S = Object.assign(defaults(), d); S.wheel = Object.assign({ excluded: [], extracted: [] }, S.wheel); S.settings = keepSettings;
+      save(); editingSl = null; viewingSl = null; draft = null; closeSongView(); resetSongForm(); showTab('songs'); toast('Imported');
+    } catch (e) { toast('Invalid file'); }
   };
   rd.readAsText(file);
 }
 
-/* ---------- Eventi ---------- */
+/* ---------- Events ---------- */
 document.addEventListener('click', e => {
   const nb = e.target.closest('nav button'); if (nb) return nb.dataset.tab === 'sets' ? goSetsList() : showTab(nb.dataset.tab);
   const el = e.target.closest('[data-act]'); if (!el) return;
@@ -673,10 +750,16 @@ document.addEventListener('click', e => {
     case 'save-song': saveSong(); break;
     case 'new-song': openSongModal(); break;
     case 'edit-song': openSongModal(id); break;
+    case 'open-song': openSongView(id); break;
+    case 'close-song-view': closeSongView(); break;
+    case 'edit-song-from-view': openSongModal(viewingSong); break;
+    case 'copy-lyrics': copyLyrics(); break;
+    case 'pdf-lyrics': exportLyricsPdf(); break;
+    case 'set-theme': S.settings.theme = el.dataset.theme; save(); applyTheme(); drawWheel(); break;
     case 'del-song-modal': if (editingSong) delSong(editingSong); break;
     case 'dur-minus': adjustDur(-15); break;
     case 'dur-plus': adjustDur(15); break;
-    case 'open-settings': $('#settings').classList.add('on'); break;
+    case 'open-settings': applyTheme(); $('#settings').classList.add('on'); break;
     case 'close-modal': {
       if (el.classList.contains('sheet-bg') && e.target !== el) break;
       const m = el.closest('.sheet-bg');
@@ -713,16 +796,16 @@ document.addEventListener('click', e => {
     case 'spin': spin(); break;
     case 'reset-wheel':
       if (spinning) break;
-      S.wheel.extracted = []; save(); $('#result').style.display = 'none'; renderWheel(); toast('Ruota resettata'); break;
+      S.wheel.extracted = []; save(); $('#result').style.display = 'none'; renderWheel(); toast('Wheel reset'); break;
     case 'only-cover': case 'only-own': {
       if (spinning) break;
       const own = el.dataset.act === 'only-own';
       const keep = S.songs.filter(s => !!s.own === own);
-      if (!keep.length) { toast(own ? 'Nessun pezzo nostro nel repertorio' : 'Nessuna cover nel repertorio'); break; }
+      if (!keep.length) { toast(own ? 'No original songs in the repertoire' : 'No covers in the repertoire'); break; }
       S.wheel.extracted = [];
       S.wheel.excluded = S.songs.filter(s => !!s.own !== own).map(s => s.id);
       save(); $('#result-modal').classList.remove('on'); pending = null; renderWheel();
-      toast(own ? 'Ruota: solo i nostri pezzi' : 'Ruota: solo cover'); break;
+      toast(own ? 'Wheel: originals only' : 'Wheel: covers only'); break;
     }
     case 'include-all': if (spinning) break; S.wheel.excluded = []; save(); renderWheel(); break;
     case 'putback': if (spinning) break; S.wheel.extracted = S.wheel.extracted.filter(x => x !== id); save(); renderWheel(); break;
@@ -746,13 +829,13 @@ document.addEventListener('input', e => {
     const l = curSl();
     if (l) { l.notes = l.notes || []; l.notes[+el.dataset.note] = el.value; save(); }
   }
-  if (el.id === 'sl-name') { const l = curSl(); if (l) { l.name = el.value; save(); $('#sl-edit-view h1').textContent = l.name || 'Scaletta'; } }
+  if (el.id === 'sl-name') { const l = curSl(); if (l) { l.name = el.value; save(); $('#sl-edit-view h1').textContent = l.name || 'Setlist'; } }
 });
 $('#s-title').addEventListener('keydown', e => { if (e.key === 'Enter') $('#s-dur').focus(); });
 $('#s-dur').addEventListener('keydown', e => { if (e.key === 'Enter') saveSong(); });
 window.addEventListener('resize', () => { if ($('#tab-wheel').classList.contains('on')) drawWheel(); });
 
-// i pulsanti +/-15s non devono rubare il focus: la tastiera resta aperta e il layout non si sposta
+// the +/-15s buttons must not steal focus: keeps the keyboard open and the layout stable
 document.addEventListener('mousedown', e => { if (e.target.closest('.stepper button')) e.preventDefault(); });
 window.handleBack = function () {
   const m = document.querySelector('.sheet-bg.on');
@@ -762,6 +845,7 @@ window.handleBack = function () {
     if (m.id === 'result-modal') commitPending();
     return true;
   }
+  if (viewingSong) { closeSongView(); return true; }
   if (editingSl) { tryLeaveEditor(); return true; }
   if (viewingSl && $('#tab-sets').classList.contains('on')) { viewingSl = null; renderSetlists(); return true; }
   if (!$('#tab-songs').classList.contains('on')) { showTab('songs'); return true; }

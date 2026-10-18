@@ -27,16 +27,16 @@ jobs:
         run: gradle assembleDebug --no-daemon
 
       - name: Rename APK
-        run: cp app/build/outputs/apk/debug/app-debug.apk Repertorio.apk
+        run: cp app/build/outputs/apk/debug/app-debug.apk Band-setlist-manager.apk
 
       - uses: actions/upload-artifact@v4
         with:
-          name: Repertorio-apk
-          path: Repertorio.apk
+          name: Band-setlist-manager-apk
+          path: Band-setlist-manager.apk
 
       - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: build-${{ github.run_number }}
           name: Build ${{ github.run_number }}
-          files: Repertorio.apk
+          files: Band-setlist-manager.apk
