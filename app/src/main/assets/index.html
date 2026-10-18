@@ -38,7 +38,7 @@ button.ico{padding:8px 11px;min-width:40px}
 .empty{color:var(--mut);text-align:center;padding:16px 0;margin:0}
 nav{position:fixed;left:0;right:0;bottom:0;background:var(--navbg);border-top:1px solid var(--bd);display:flex;padding:6px 6px calc(6px + env(safe-area-inset-bottom));z-index:10}
 nav button{flex:1;background:none;border:0;color:var(--mut);padding:8px 4px;font-size:13px;border-radius:10px}
-nav button b{display:block;font-size:20px;font-weight:400}
+nav button b{display:flex;justify-content:center;height:24px;margin-bottom:2px}
 nav button.on{color:var(--acc);background:var(--card2)}
 .tab{display:none}.tab.on{display:block}
 .num{width:24px;color:var(--mut);text-align:right;font-variant-numeric:tabular-nums}
@@ -82,6 +82,7 @@ button.mini{padding:7px 0;min-width:34px;width:34px;font-size:14px}
 textarea{width:100%;background:var(--card2);border:1px solid var(--bd);border-radius:10px;color:var(--txt);padding:11px 12px;font-size:16px;font-family:inherit;resize:vertical;margin-bottom:8px}
 .fullview{position:fixed;inset:0;background:var(--bg);z-index:12;overflow:auto;padding:14px 14px 40px;display:none}
 .fullview.on{display:block}
+#lyrics-ed.on{display:flex}
 .fullview>*{max-width:640px;margin-left:auto;margin-right:auto}
 .lyrics{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.5;font-size:16px}
 .kv{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid var(--bd)}
@@ -176,6 +177,15 @@ textarea{width:100%;background:var(--card2);border:1px solid var(--bd);border-ra
   <div class="card" id="wheel-songs"></div>
 </section>
 
+<!-- LYRICS EDITOR -->
+<div class="fullview" id="lyrics-ed" style="z-index:30;padding:0;overflow:hidden;flex-direction:column">
+  <div class="hdr" style="padding:12px 14px;margin:0;max-width:none">
+    <h1>Lyrics</h1>
+    <button class="pri" data-act="lyrics-done">Done</button>
+  </div>
+  <textarea id="le-text" placeholder="Type or paste the lyrics…" style="flex:1;margin:0;border-radius:0;border-width:1px 0 0;resize:none;max-width:none;font-size:17px;line-height:1.5"></textarea>
+</div>
+
 <!-- SONG VIEW -->
 <div class="fullview" id="song-view">
   <div class="hdr">
@@ -208,7 +218,7 @@ textarea{width:100%;background:var(--card2);border:1px solid var(--bd);border-ra
     </div>
     <label class="chk"><input type="checkbox" id="s-own"> Original song (ours)</label>
     <div class="sub" style="margin:8px 2px 6px">Lyrics (optional)</div>
-    <textarea id="s-lyrics" rows="7" placeholder="Paste or type the lyrics…"></textarea>
+    <textarea id="s-lyrics" rows="4" readonly data-act="edit-lyrics" placeholder="Tap to write or paste the lyrics…"></textarea>
     <div class="btns" style="margin-top:8px">
       <button class="dng" id="sm-del" data-act="del-song-modal" style="display:none">🗑 Delete</button>
       <button class="pri" data-act="save-song">Save</button>
@@ -259,9 +269,9 @@ textarea{width:100%;background:var(--card2);border:1px solid var(--bd);border-ra
 <div class="toast" id="toast"></div>
 
 <nav>
-  <button class="on" data-tab="songs"><b>🎸</b>Repertoire</button>
-  <button data-tab="sets"><b>📋</b>Setlists</button>
-  <button data-tab="wheel"><b>🎡</b>Wheel</button>
+  <button class="on" data-tab="songs"><b><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h11M4 12h11M4 17h7"/><path d="M19 15V5l-3 1"/><circle cx="17" cy="16" r="2"/></svg></b>Repertoire</button>
+  <button data-tab="sets"><b><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 9h6M9 13h6M9 17h3"/></svg></b>Setlists</button>
+  <button data-tab="wheel"><b><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4v8l5.7 5.7M12 12H4.5"/></svg></b>Wheel</button>
 </nav>
 
 <script>
@@ -368,6 +378,8 @@ function openSongModal(id) {
   $('#song-modal').classList.add('on');
   if (!s) setTimeout(() => $('#s-title').focus(), 80);
 }
+function openLyricsEd() { $('#le-text').value = $('#s-lyrics').value; $('#lyrics-ed').classList.add('on'); setTimeout(() => $('#le-text').focus(), 50); }
+function closeLyricsEd() { $('#s-lyrics').value = $('#le-text').value; $('#le-text').blur(); $('#lyrics-ed').classList.remove('on'); }
 function closeSongModal() { editingSong = null; $('#song-modal').classList.remove('on'); }
 function resetSongForm() { closeSongModal(); }
 function adjustDur(d) {
@@ -751,6 +763,8 @@ document.addEventListener('click', e => {
     case 'new-song': openSongModal(); break;
     case 'edit-song': openSongModal(id); break;
     case 'open-song': openSongView(id); break;
+    case 'edit-lyrics': openLyricsEd(); break;
+    case 'lyrics-done': closeLyricsEd(); break;
     case 'close-song-view': closeSongView(); break;
     case 'edit-song-from-view': openSongModal(viewingSong); break;
     case 'copy-lyrics': copyLyrics(); break;
@@ -838,6 +852,7 @@ window.addEventListener('resize', () => { if ($('#tab-wheel').classList.contains
 // the +/-15s buttons must not steal focus: keeps the keyboard open and the layout stable
 document.addEventListener('mousedown', e => { if (e.target.closest('.stepper button')) e.preventDefault(); });
 window.handleBack = function () {
+  if ($('#lyrics-ed').classList.contains('on')) { closeLyricsEd(); return true; }
   const m = document.querySelector('.sheet-bg.on');
   if (m) {
     m.classList.remove('on');
