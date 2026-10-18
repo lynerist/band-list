@@ -271,7 +271,7 @@ textarea{width:100%;background:var(--card2);border:1px solid var(--bd);border-ra
 <nav>
   <button class="on" data-tab="songs"><b><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h11M4 12h11M4 17h7"/><path d="M19 15V5l-3 1"/><circle cx="17" cy="16" r="2"/></svg></b>Repertoire</button>
   <button data-tab="sets"><b><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 9h6M9 13h6M9 17h3"/></svg></b>Setlists</button>
-  <button data-tab="wheel"><b><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4v8l5.7 5.7M12 12H4.5"/></svg></b>Wheel</button>
+  <button data-tab="wheel"><b><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 5v16M4 13h16M6.3 7.3l11.4 11.4M17.7 7.3L6.3 18.7"/><path d="M12 1.8v3.4" stroke-width="2.4"/></svg></b>Wheel</button>
 </nav>
 
 <script>
@@ -698,8 +698,44 @@ function drawPointer(ctx, cx) {
   ctx.beginPath(); ctx.moveTo(cx - 13, 2); ctx.lineTo(cx + 13, 2); ctx.lineTo(cx, 30); ctx.closePath();
   ctx.fillStyle = css.getPropertyValue('--own').trim(); ctx.fill(); ctx.strokeStyle = css.getPropertyValue('--bg').trim(); ctx.lineWidth = 2; ctx.stroke();
 }
+/* soft synthesized tick sounds (ASMR-style) */
+let AC = null, noiseBuf = null;
+function audioInit() {
+  try {
+    if (!AC) {
+      AC = new (window.AudioContext || window.webkitAudioContext)();
+      noiseBuf = AC.createBuffer(1, AC.sampleRate * 0.1, AC.sampleRate);
+      const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    }
+    if (AC.state === 'suspended') AC.resume();
+  } catch (e) { AC = null; }
+}
+function tick(speed) {
+  if (!AC) return;
+  try {
+    const t = AC.currentTime, src = AC.createBufferSource(); src.buffer = noiseBuf;
+    const bp = AC.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1800 + Math.random() * 500 + speed * 900; bp.Q.value = 5;
+    const g = AC.createGain(); g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.35 + speed * 0.25, t + 0.003);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.045);
+    src.connect(bp); bp.connect(g); g.connect(AC.destination); src.start(t); src.stop(t + 0.06);
+  } catch (e) {}
+}
+function settleSound() {
+  if (!AC) return;
+  try {
+    const t = AC.currentTime;
+    [[392, 0], [587, 0.09]].forEach(([f, dl]) => {
+      const o = AC.createOscillator(), g = AC.createGain(); o.type = 'sine'; o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, t + dl); g.gain.exponentialRampToValueAtTime(0.14, t + dl + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dl + 0.9);
+      o.connect(g); g.connect(AC.destination); o.start(t + dl); o.stop(t + dl + 1);
+    });
+  } catch (e) {}
+}
 function spin() {
   if (spinning) return;
+  audioInit();
   const act = activeSongs(); if (!act.length) return;
   const n = act.length, step = Math.PI * 2 / n, TAU = Math.PI * 2;
   const w = Math.floor(Math.random() * n);
@@ -710,15 +746,22 @@ function spin() {
   const start = rot, dur = 4500, t0 = performance.now();
   spinning = true; $('#spin-btn').disabled = true; $('#result').style.display = 'none';
   const winner = act[w];
+  let lastIdx = -1, lastTick = 0;
   (function frame(now) {
     const t = Math.min(1, (now - t0) / dur);
     const e = 1 - Math.pow(1 - t, 4);
     rot = start + delta * e; drawWheel();
+    const idx = Math.floor(((((-rot) % TAU) + TAU) % TAU) / step);
+    if (idx !== lastIdx) {
+      if (lastIdx !== -1 && now - lastTick > 28) { tick(Math.pow(1 - t, 2)); lastTick = now; }
+      lastIdx = idx;
+    }
     if (t < 1) return requestAnimationFrame(frame);
     spinning = false; rot = rot % TAU;
     pending = { id: winner.id, idx: w };
     $('#rm-title').textContent = winner.title;
     $('#rm-sub').textContent = durTxt(winner.dur) + (winner.own ? ' · original' : '');
+    settleSound();
     if (navigator.vibrate) navigator.vibrate(200);
     renderWheel();
     $('#result-modal').classList.add('on');
